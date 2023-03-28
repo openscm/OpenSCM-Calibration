@@ -1,0 +1,130 @@
+[tool.commitizen]
+version = "0.2.0"
+version_files = ["pyproject.toml:^version"]
+tag_format = "v$version"
+major_version_zero = true
+
+[tool.jupytext]
+formats = "ipynb,myst"
+
+[tool.poetry]
+name = "openscm-calibration"
+version = "0.2.0"
+description = ""
+authors = ["Zebedee Nicholls <zebedee.nicholls@climate-energy-college.org>"]
+readme = "README.rst"
+packages = [{include = "openscm_calibration", from = "src"}]
+
+[tool.poetry.dependencies]
+python = "^3.9"
+attrs = "^22.2.0"
+scmdata = "0.15.0"
+openscm-units = "^0.5.0"
+
+notebook = { version = "^6.5.3", optional = true }
+emcwrap = { version = "^0.2.4", optional = true }
+multiprocess = { version = "^0.70.14", optional = true }
+tqdm = { version = "^4.65.0", optional = true }
+# While waiting for a new release, see
+# https://github.com/dnanhkhoa/nb_black/issues/38
+nb-black = { git = "https://github.com/dnanhkhoa/nb_black.git", rev = "50c0f1",  optional = true }
+corner = { version = "^2.2.1", optional = true }
+seaborn = { version = "^0.12.2", optional = true }
+h5py = { version = "^3.8.0", optional = true }
+ipywidgets = { version = "^8.0.6", optional = true }
+
+[tool.poetry.extras]
+notebooks = ["notebook", "emcwrap", "multiprocess", "tqdm", "corner", "seaborn", "nb-black", "h5py", "ipywidgets"]
+plots = ["corner", "seaborn"]
+
+[tool.poetry.group.tests.dependencies]
+pytest = "^7.2.2"
+emcee = "^3.1.4"
+multiprocess = "^0.70.14"
+
+[tool.poetry.group.docs.dependencies]
+myst-nb = "^0.17.0"
+sphinx-rtd-theme = "^1.2.0"
+# While we wait for https://github.com/tox-dev/sphinx-autodoc-typehints/pull/345
+sphinx-autodoc-typehints = { git = "https://github.com/znicholls/sphinx-autodoc-typehints.git", rev = "b28ad12" }
+jupytext = "^1.14.5"
+sphinx-copybutton = "^0.5.2"
+
+[tool.poetry.group.dev.dependencies]
+black = "^23.1.0"
+flake8 = "^6.0.0"
+isort = "^5.12.0"
+mypy = "^1.1.1"
+pydocstyle = {extras = ["toml"], version = "^6.3.0"}
+pylint = "^2.17.1"
+bandit = "^1.7.5"
+pytest-cov = "^4.0.0"
+commitizen = "^2.42.1"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.isort]
+known_first_party = "openscm_calibration"
+default_section = "THIRDPARTY"
+profile = "black"
+# comma after multiline breaks like black:
+include_trailing_comma = true
+# black default line length:
+line_length = 88
+# multiline breaks like black:
+multi_line_output = 3
+
+[tool.mypy]
+disallow_any_generics = true
+disallow_incomplete_defs = true
+disallow_untyped_calls = true
+disallow_subclassing_any = true
+disallow_untyped_decorators = true
+disallow_untyped_defs = true
+follow_imports = "normal"
+check_untyped_defs = true
+show_error_context = true
+show_error_codes = true
+warn_redundant_casts = true
+warn_return_any = true
+warn_unused_ignores = true
+warn_unreachable = true
+ignore_missing_imports = true
+no_implicit_reexport = true
+strict_equality = true
+strict_optional = true
+
+[tool.pylint.messages_control]
+disable = ["format"]
+
+[tool.pydocstyle]
+# D213 - Multi-line docstring summary should start at the second line
+# D402 - First line should not be the function's "signature"
+add_select = "D213, D402"
+
+# D105 - Missing docstring in magic method
+# D200 - One-line docstring should fit on one line with quotes
+# D205 - 1 blank line required between summary line and description
+# D400 - First line should end with a period
+add_ignore = "D200, D205, D400, D105"
+
+convention = "numpy"
+inherit = false
+
+[tool.bandit]
+
+[tool.coverage.run]
+source = ["openscm_calibration"]
+
+[tool.coverage.report]
+fail_under = 95
+skip_empty = true
+show_missing = true
+# Regexes for lines to exclude from consideration
+exclude_lines = [
+    "pragma: no cover",
+    # Don't complain about missing type checking code:
+    "if TYPE_CHECKING",
+]

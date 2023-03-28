@@ -1,0 +1,130 @@
+# Massive thanks to https://github.com/marketplace/actions/install-poetry-action
+# Some more inspo for workflows could come from here
+# https://github.com/LaurenceRawlings/python-poetry-cicd/tree/main/.github/workflows
+
+# TODO: take a look at https://github.com/actions/cache/blob/main/caching-strategies.md#make-cache-read-only--reuse-cache-from-centralized-job
+# for caching
+name: CI-CD
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+    tags: ['v*']
+
+jobs:
+  linting-and-docs:
+    if: ${{ !github.event.pull_request.draft }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v3
+      - name: Set up python
+        id: setup-python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.9"
+      - name: Load cached Poetry installation
+        id: cached-poetry
+        uses: actions/cache@v3
+        with:
+          path: ~/.local  # the path depends on the OS
+          key: poetry-1  # increment to reset cache
+      - name: Install Poetry
+        if: steps.cached-poetry.outputs.cache-hit != 'true'
+        uses: snok/install-poetry@v1
+      - name: Load cached venv
+        id: cached-poetry-dependencies
+        uses: actions/cache@v3
+        with:
+          path: .venv
+          key: venv-linting-${{ hashFiles('**/poetry.lock') }}
+      - name: Install dependencies
+        run: |
+          poetry config virtualenvs.create true
+          poetry config virtualenvs.in-project true
+          poetry install --no-interaction --no-root --all-extras
+      - name: Install package
+        run: poetry install --no-interaction --all-extras
+      - name: docs
+        run: poetry run sphinx-build -W --keep-going -b html docs/source docs/build
+      - name: flake8
+        run: poetry run flake8 -v src tests
+      - name: black
+        run: poetry run black --check src tests docs/source/conf.py
+      - name: isort
+        run: poetry run isort -v --check-only src tests
+      - name: mypy
+        run: poetry run mypy src
+      - name: pylint
+        run: poetry run pylint src
+      - name: pydocstyle
+        run: poetry run pydocstyle -v src
+      - name: bandit
+        run: poetry run bandit -r src
+
+  tests:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ "ubuntu-latest" ]
+        python-version: [ "3.9", "3.10", "3.11" ]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v3
+      - name: Set up python ${{ matrix.python-version }}
+        id: setup-python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Load cached Poetry installation
+        id: cached-poetry
+        uses: actions/cache@v3
+        with:
+          path: ~/.local  # the path depends on the OS
+          key: ${{ runner.os }}-${{ steps.setup-python.outputs.python-version }}-poetry-1  # increment to reset cache
+      - name: Install Poetry
+        if: steps.cached-poetry.outputs.cache-hit != 'true'
+        uses: snok/install-poetry@v1
+      - name: Load cached venv
+        id: cached-poetry-dependencies
+        uses: actions/cache@v3
+        with:
+          path: .venv
+          key: venv-${{ runner.os }}-${{ steps.setup-python.outputs.python-version }}-${{ hashFiles('**/poetry.lock') }}
+      - name: Install dependencies
+        run: |
+          poetry config virtualenvs.create true
+          poetry config virtualenvs.in-project true
+          poetry install --no-interaction --no-root
+      - name: Install package
+        run: poetry install --no-interaction
+      - name: Check importable without extras
+        run: poetry run python scripts/test-install.py
+      - name: Load cached full venv
+        id: cached-poetry-dependencies-full
+        uses: actions/cache@v3
+        with:
+          path: .venv
+          key: venv-full-${{ runner.os }}-${{ steps.setup-python.outputs.python-version }}-${{ hashFiles('**/poetry.lock') }}
+      - name: Install full dependencies
+        run: |
+          poetry config virtualenvs.create true
+          poetry config virtualenvs.in-project true
+          poetry install --no-interaction --no-root --all-extras
+      - name: Run tests
+        run: |
+          poetry run pytest -r a -v --doctest-modules --cov --cov-report=term-missing --cov-report=xml
+          poetry run coverage report
+      - name: Build package
+        run: |
+          poetry build --no-interaction
+      - name: Check build
+        run: |
+          tar -tvf dist/openscm_calibration-*.tar.gz --wildcards '*openscm_calibration/py.typed'
+
+      # TODO: Upload code coverage if ubuntu with Python 3.9
+
+# deploy (separate into different file and only do on master i.e. after tests
+#         have passed, or reuse test workflow before deploying)

@@ -1,3 +1,7 @@
+# Notebooks and related stuff
+*.ipynb
+*.h5
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
@@ -127,3 +131,6 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+# Mac stuff
+*.DS_Store

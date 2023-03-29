@@ -27,6 +27,7 @@ checks:  ## run all the linting checks of the codebase
 		echo "=== mypy ==="; poetry run mypy src || echo "--- mypy failed ---" >&2; \
 		echo "=== pylint ==="; poetry run pylint src || echo "--- pylint failed ---" >&2; \
 		echo "=== pydocstyle ==="; poetry run pydocstyle src || echo "--- pydocstyle failed ---" >&2; \
+		echo "=== bandit ==="; poetry run bandit -r src --quiet || echo "--- bandit failed ---" >&2; \
 		echo "======"
 
 .PHONY: black

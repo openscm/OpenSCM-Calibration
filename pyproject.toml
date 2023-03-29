@@ -36,6 +36,25 @@ sphinx-rtd-theme = "^1.2.0"
 sphinx-autodoc-typehints = "^1.22"
 
 
+
+[tool.poetry.group.dev.dependencies]
+black = "^23.1.0"
+flake8 = "^6.0.0"
+isort = "^5.12.0"
+mypy = "^1.1.1"
+pydocstyle = "^6.3.0"
+
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.isort]
+known_first_party = "openscm_calibration"
+default_section = "THIRDPARTY"
+profile = "black"
+# comma after multiline breaks like black:
+include_trailing_comma = true
+# black default line length:
+line_length = 88
+# multiline breaks like black:
+multi_line_output = 3

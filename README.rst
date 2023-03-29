@@ -7,7 +7,7 @@ TO-DO:
 
 - tests
 - docs
-- linting (mypy, pydocstyle, black, flake8, isort etc.)
+- linting (black, flake8, isort, mypy, pylint, pydocstyle, etc.)
 - CI
 - notebooks
 - installation

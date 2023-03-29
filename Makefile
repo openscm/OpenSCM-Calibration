@@ -24,6 +24,9 @@ checks:  ## run all the linting checks of the codebase
 	@echo "=== flake8 ==="; poetry run flake8 src tests || echo "--- flake8 failed ---" >&2; \
 		echo "=== black ==="; poetry run black --check src tests || echo "--- black failed ---" >&2; \
 		echo "=== isort ==="; poetry run isort --check-only src tests || echo "--- isort failed ---" >&2; \
+		echo "=== mypy ==="; poetry run mypy src || echo "--- mypy failed ---" >&2; \
+		echo "=== pylint ==="; poetry run pylint src || echo "--- pylint failed ---" >&2; \
+		echo "=== pydocstyle ==="; poetry run pydocstyle src || echo "--- pydocstyle failed ---" >&2; \
 		echo "======"
 
 .PHONY: black

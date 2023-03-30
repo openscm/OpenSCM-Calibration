@@ -13,12 +13,43 @@ if TYPE_CHECKING:
     import emcee.backends
 
 
+def get_acceptance_fractions(
+    chains: np.typing.NDArray[np.float_],
+) -> np.typing.NDArray[np.float_]:
+    """
+    Get acceptance fraction in each chain of an MCMC ensemble of chains
+
+    Parameters
+    ----------
+    chains
+        Chains. We expected that the the axes are ["step", "chain",
+        "parameter"]
+
+    Returns
+    -------
+        Acceptance fraction in each chain
+    """
+    # This is complicated, in short:
+    # 1. find differences between steps across all calibration parameters
+    # 2. check, in each chain, if there is any difference in any of the
+    #   parameter values (where this happens, it means that the step was
+    #   accepted)
+    # 3. sum up the number of accepted steps in each chain
+    accepted: np.typing.NDArray[np.int_] = np.sum(
+        np.any(np.diff(chains, axis=0), axis=2), axis=0
+    )
+    n_proposals = chains.shape[0] - 1  # first step isn't a proposal
+    acceptance_fraction = accepted / np.float_(n_proposals)
+
+    return acceptance_fraction
+
+
 def check_autocorrelation(
-    inp: Union[emcee.backends.Backend],
+    inp: emcee.backends.Backend,
     burnin: int,
     thin: int = 1,
     autocorr_tol: int = 0,
-    convergence_ratio: int = 50,
+    convergence_ratio: float = 50,
 ) -> Dict[str, Union[float, int, np.typing.NDArray[np.float_], bool]]:
     """
     Check autocorrelation in chains
@@ -50,7 +81,7 @@ def check_autocorrelation(
     -------
         Results of calculation, keys (TODO check dot points in html):
 
-        - tau: autocorrelation in each chain
+        - tau: autocorrelation in each chains
         - autocorr: average of tau
         - converged: whether the chains have converged or not based on
           ``convergence_ratio``
@@ -70,14 +101,5 @@ def check_autocorrelation(
         "convergence_ratio": convergence_ratio,
         "steps_post_burnin": inp.iteration - burnin,
     }
-
-    # TODO: move into notebook
-    # if verbose:
-    #     print(f"tau = {np.round(out['tau'], 2)}")
-    #     print(f"autocorr = {out['autocorr']:.2f}")
-    #     print(f"inp.iteration - burnin = {inp.iteration - burnin}")
-    #     print(
-    #         f"convergence_ratio * autocorr = {convergence_ratio * out['autocorr']:.1f}"
-    #     )
 
     return out

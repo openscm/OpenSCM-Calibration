@@ -40,7 +40,7 @@ isort:  ## format the code using black
 
 .PHONY: test
 test:  ## run the tests
-	poetry run pytest -r a -vv
+	poetry run pytest -r a -vv --cov
 
 virtual-environment:  ## update virtual environment, create a new one if it doesn't already exist
 	# Put virtual environments in the project

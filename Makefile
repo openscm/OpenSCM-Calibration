@@ -22,7 +22,7 @@ help:  ## print short description of each target
 .PHONY: checks
 checks:  ## run all the linting checks of the codebase
 	@echo "=== flake8 ==="; poetry run flake8 src tests || echo "--- flake8 failed ---" >&2; \
-		echo "=== black ==="; poetry run black --check src tests || echo "--- black failed ---" >&2; \
+		echo "=== black ==="; poetry run black --check src tests docs/source/conf.py || echo "--- black failed ---" >&2; \
 		echo "=== isort ==="; poetry run isort --check-only src tests || echo "--- isort failed ---" >&2; \
 		echo "=== mypy ==="; poetry run mypy src || echo "--- mypy failed ---" >&2; \
 		echo "=== pylint ==="; poetry run pylint src || echo "--- pylint failed ---" >&2; \
@@ -32,7 +32,7 @@ checks:  ## run all the linting checks of the codebase
 
 .PHONY: black
 black:  ## format the code using black
-	poetry run black src tests
+	poetry run black src tests docs/source/conf.py
 
 .PHONY: isort
 isort:  ## format the code using black
@@ -41,6 +41,10 @@ isort:  ## format the code using black
 .PHONY: test
 test:  ## run the tests
 	poetry run pytest -r a -vv --cov
+
+.PHONY: docs
+docs:  ## build the docs
+	poetry run sphinx-build -b html docs/source docs/build/html
 
 virtual-environment:  ## update virtual environment, create a new one if it doesn't already exist
 	# Put virtual environments in the project

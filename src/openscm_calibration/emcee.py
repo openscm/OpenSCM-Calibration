@@ -79,14 +79,14 @@ def check_autocorrelation(
 
     Returns
     -------
-        Results of calculation, keys (TODO check dot points in html):
+        Results of calculation, keys:
 
-        - tau: autocorrelation in each chains
-        - autocorr: average of tau
-        - converged: whether the chains have converged or not based on
+        - "tau": autocorrelation in each chains
+        - "autocorr": average of tau
+        - "converged": whether the chains have converged or not based on
           ``convergence_ratio``
-        - convergence_ratio: value of ``convergence_ratio``
-        - steps_post_burnin: Number of steps in chains post burn-in
+        - "convergence_ratio": value of ``convergence_ratio``
+        - "steps_post_burnin": Number of steps in chains post burn-in
 
     """
     tau = inp.get_autocorr_time(discard=burnin, tol=autocorr_tol, thin=thin)

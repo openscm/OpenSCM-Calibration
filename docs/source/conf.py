@@ -32,8 +32,6 @@ extensions = [
     # in the list for things to work properly
     # https://github.com/tox-dev/sphinx-autodoc-typehints#compatibility-with-sphinxextnapoleon
     "sphinx_autodoc_typehints",
-    # allow future annotations
-    "sphinx_autodoc_future_annotations",
 ]
 
 # general sphinx settings
@@ -70,7 +68,7 @@ napoleon_google_docstring = False
 # We use numpy style docstrings
 napoleon_numpy_docstring = True
 # Don't use separate rtype for the return documentation
-napoleon_use_rtype = True
+napoleon_use_rtype = False
 
 # autodoc type hints settings
 # https://github.com/tox-dev/sphinx-autodoc-typehints
@@ -79,7 +77,7 @@ typehints_fully_qualified = True
 # Add rtype directive if needed
 typehints_document_rtype = True
 # Put the return type as part of the return documentation
-typehints_use_rtype = True
+typehints_use_rtype = False
 
 # Left-align maths equations
 mathjax3_config = {"chtml": {"displayAlign": "center"}}

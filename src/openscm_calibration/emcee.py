@@ -11,11 +11,12 @@ if TYPE_CHECKING:
     # See here for explanation of this pattern and why we don't need quotes
     # below https://docs.python.org/3/library/typing.html#constant
     import emcee.backends
+    import numpy.typing as nptype
 
 
 def get_acceptance_fractions(
-    chains: np.typing.NDArray[np.float_],
-) -> np.typing.NDArray[np.float_]:
+    chains: nptype.NDArray[np.float_],
+) -> nptype.NDArray[np.float_]:
     """
     Get acceptance fraction in each chain of an MCMC ensemble of chains
 
@@ -35,7 +36,7 @@ def get_acceptance_fractions(
     #   parameter values (where this happens, it means that the step was
     #   accepted)
     # 3. sum up the number of accepted steps in each chain
-    accepted: np.typing.NDArray[np.int_] = np.sum(
+    accepted: nptype.NDArray[np.int_] = np.sum(
         np.any(np.diff(chains, axis=0), axis=2), axis=0
     )
     n_proposals = chains.shape[0] - 1  # first step isn't a proposal
@@ -50,7 +51,7 @@ def check_autocorrelation(
     thin: int = 1,
     autocorr_tol: int = 0,
     convergence_ratio: float = 50,
-) -> Dict[str, Union[float, int, np.typing.NDArray[np.float_], bool]]:
+) -> Dict[str, Union[float, int, bool, nptype.NDArray[np.float_]]]:
     """
     Check autocorrelation in chains
 

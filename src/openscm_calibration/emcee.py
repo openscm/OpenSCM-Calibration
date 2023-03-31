@@ -45,7 +45,7 @@ def get_acceptance_fractions(
     return acceptance_fraction
 
 
-def check_autocorrelation(
+def get_autocorrelation_info(
     inp: emcee.backends.Backend,
     burnin: int,
     thin: int = 1,
@@ -53,7 +53,7 @@ def check_autocorrelation(
     convergence_ratio: float = 50,
 ) -> Dict[str, Union[float, int, bool, nptype.NDArray[np.float_]]]:
     """
-    Check autocorrelation in chains
+    Get info about autocorrelation in chains
 
     Parameters
     ----------

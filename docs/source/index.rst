@@ -1,7 +1,12 @@
 .. Documentation master file
 
-Welcome to OpenSCM-Calibration's documentation!
-===============================================
+.. include:: ../../README.rst
+    :start-after: sec-begin-description
+    :end-before: sec-end-description
+
+.. include:: ../../README.rst
+    :start-after: sec-begin-installation
+    :end-before: sec-end-installation
 
 .. toctree::
    :maxdepth: 2

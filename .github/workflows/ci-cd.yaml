@@ -37,11 +37,13 @@ jobs:
         uses: actions/cache@v3
         with:
           path: .venv
-          key: venv-linters-${{ runner.os }}-${{ steps.setup-python.outputs.python-version }}-${{ hashFiles('**/poetry.lock') }}
+          key: venv-${{ runner.os }}-${{ steps.setup-python.outputs.python-version }}-${{ hashFiles('**/poetry.lock') }}
       - name: Install dependencies
         if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
-        run: poetry install --no-interaction --no-root --only dev
-      - name: Linters
+        run: poetry install --no-interaction --no-root
+      - name: Install package
+        run: poetry install --no-interaction
+      - name: Run linters
         run: |
           poetry run flake8 src tests
           poetry run black --check src tests docs/source/conf.py
@@ -49,8 +51,6 @@ jobs:
           poetry run pylint src
           poetry run pydocstyle src
           poetry run bandit -r src --quiet
-
-
 
 
 # linting and docs

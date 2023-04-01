@@ -10,9 +10,10 @@ surprise us with your applications).
 
 TO-DO:
 
-- tests
 - CI (checks plus docs)
     - check py.typed file is in built package (build and then just run ``tar -tvf dist/openscm_calibration-*.tar.gz '*openscm_calibration/py.typed'``)
+- add https://commitizen-tools.github.io/commitizen/
+- tests
 - notebooks
 
 .. sec-begin-installation

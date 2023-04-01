@@ -46,7 +46,7 @@ jobs:
       - name: Run linters
         run: |
           echo "flake8"
-          poetry run flake8 src tests
+          poetry run flake8 -v src tests
           echo "black"
           poetry run black --check src tests docs/source/conf.py
           echo "mypy"
@@ -54,9 +54,9 @@ jobs:
           echo "pylint"
           poetry run pylint src
           echo "pydocstyle"
-          poetry run pydocstyle src
+          poetry run pydocstyle -v src
           echo "bandit"
-          poetry run bandit -r src --quiet
+          poetry run bandit -r src
 
 
 # linting and docs

@@ -80,7 +80,7 @@ jobs:
         uses: actions/cache@v3
         with:
           path: ~/.local  # the path depends on the OS
-          key: poetry-0  # increment to reset cache
+          key: ${{ runner.os }}-${{ steps.setup-python.outputs.python-version }}-poetry-0  # increment to reset cache
       - name: Install Poetry
         if: steps.cached-poetry.outputs.cache-hit != 'true'
         uses: snok/install-poetry@v1
@@ -105,6 +105,7 @@ jobs:
       # TODO: Upload code coverage if ubuntu with Python 3.9
 
 # tests
-# build
-# test build
-# deploy (Separate into different file)
+# build package
+# test built package
+# deploy (separate into different file and only do on master i.e. after tests
+#         have passed, or reuse test workflow before deploying)

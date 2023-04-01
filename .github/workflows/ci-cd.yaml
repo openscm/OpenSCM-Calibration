@@ -40,7 +40,7 @@ jobs:
           key: venv-linters-${{ runner.os }}-${{ steps.setup-python.outputs.python-version }}-${{ hashFiles('**/poetry.lock') }}
       - name: Install dependencies
         if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
-        run: poetry install --no-interaction --no-root --only
+        run: poetry install --no-interaction --no-root --only dev
       - name: Linters
         run: |
           poetry run flake8 src tests

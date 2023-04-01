@@ -45,11 +45,17 @@ jobs:
         run: poetry install --no-interaction
       - name: Run linters
         run: |
+          echo "flake8"
           poetry run flake8 src tests
+          echo "black"
           poetry run black --check src tests docs/source/conf.py
+          echo "mypy"
           poetry run mypy src
+          echo "pylint"
           poetry run pylint src
+          echo "pydocstyle"
           poetry run pydocstyle src
+          echo "bandit"
           poetry run bandit -r src --quiet
 
 

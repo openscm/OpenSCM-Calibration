@@ -107,7 +107,7 @@ jobs:
           poetry build --no-interaction
       - name: Check build
         run: |
-          tar -tvf dist/openscm_calibration-*.tar.gz '*openscm_calibration/py.typed'
+          tar -tvf dist/openscm_calibration-*.tar.gz --wildcards '*openscm_calibration/py.typed'
 
       # TODO: Upload code coverage if ubuntu with Python 3.9
 

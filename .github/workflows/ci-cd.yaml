@@ -102,9 +102,15 @@ jobs:
         run: |
           poetry run pytest -r a -vv --cov --cov-report=xml
           poetry run coverage report
+      - name: Build package
+        run: |
+          poetry build --no-interaction
+      - name: Check build
+        run: |
+          tar -tvf dist/openscm_calibration-*.tar.gz '*openscm_calibration/py.typed'
+
       # TODO: Upload code coverage if ubuntu with Python 3.9
 
-# tests
 # build package
 # test built package
 # deploy (separate into different file and only do on master i.e. after tests

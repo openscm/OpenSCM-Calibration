@@ -44,6 +44,12 @@ For more usage examples, checkout :ref:`the notebooks <notebooks-reference>`.
     scmdata_utils
     store
 
+.. toctree::
+   :maxdepth: 1
+   :caption: Versions
+
+   changelog
+
 Index
 -----
 

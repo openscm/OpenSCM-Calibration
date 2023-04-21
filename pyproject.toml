@@ -1,5 +1,5 @@
 [tool.commitizen]
-version = "0.3.0"
+version = "0.4.0"
 version_files = ["pyproject.toml:^version"]
 tag_format = "v$version"
 major_version_zero = true
@@ -9,7 +9,7 @@ formats = "ipynb,myst"
 
 [tool.poetry]
 name = "openscm-calibration"
-version = "0.3.0"
+version = "0.4.0"
 description = ""
 authors = ["Zebedee Nicholls <zebedee.nicholls@climate-energy-college.org>"]
 readme = "README.rst"

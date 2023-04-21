@@ -27,7 +27,7 @@ multiprocess = { version = "^0.70.14", optional = true }
 tqdm = { version = "^4.65.0", optional = true }
 # While waiting for a new release, see
 # https://github.com/dnanhkhoa/nb_black/issues/38
-nb-black = { version = "^1.0.7",  optional = true }
+nb-black = { git = "https://github.com/dnanhkhoa/nb_black.git", rev = "50c0f1",  optional = true }
 corner = { version = "^2.2.1", optional = true }
 seaborn = { version = "^0.12.2", optional = true }
 h5py = { version = "^3.8.0", optional = true }

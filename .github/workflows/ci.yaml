@@ -4,7 +4,7 @@
 
 # TODO: take a look at https://github.com/actions/cache/blob/main/caching-strategies.md#make-cache-read-only--reuse-cache-from-centralized-job
 # for caching
-name: CI-CD
+name: CI
 
 on:
   pull_request:

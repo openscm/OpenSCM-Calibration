@@ -28,22 +28,9 @@ For more usage examples, checkout :ref:`the notebooks <notebooks-reference>`.
    :maxdepth: 2
    :caption: Contents:
 
+   api
    notebooks
    development
-
-.. toctree::
-    :maxdepth: 1
-    :caption: API reference
-
-    cost
-    emcee_utils
-    emcee_plotting
-    iter_utils
-    minimize
-    model_runner
-    scipy_plotting
-    scmdata_utils
-    store
 
 .. toctree::
    :maxdepth: 1

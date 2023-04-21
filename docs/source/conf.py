@@ -22,6 +22,8 @@ extensions = [
     # create documentation automatically from source code
     # https://www.sphinx-doc.org/en/master/usage/extensions/autodoc.html
     "sphinx.ext.autodoc",
+    # automatic summary
+    "sphinx.ext.autosummary",
     # TODO: think about using autosummary instead rather than needing to manually maintain the reference lists
     # https://stackoverflow.com/questions/48074094/use-sphinx-autosummary-recursively-to-generate-api-documentation
     # tell sphinx that we're using numpy style docstrings
@@ -70,6 +72,9 @@ autodoc_default_options = {
     # put members of classes in order as they appear in source
     "member-order": "bysource",
 }
+
+# autosummary
+autosummary_generate = True
 
 # napoleon extension settings
 # https://www.sphinx-doc.org/en/master/usage/extensions/napoleon.html

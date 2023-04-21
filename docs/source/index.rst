@@ -33,7 +33,7 @@ For more usage examples, checkout :ref:`the notebooks <notebooks-reference>`.
    development
 
 .. toctree::
-   :maxdepth: 1
+   :maxdepth: 2
    :caption: Versions
 
    changelog

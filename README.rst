@@ -3,8 +3,25 @@
 OpenSCM-Calibration
 ===================
 
++-------------------+------+--------+
+| Repository health | |CI| | |Docs| |
++-------------------+------+--------+
+
+.. sec-begin-links
+
+.. |CI| image:: https://github.com/openscm/OpenSCM-Calibration/workflows/CI/badge.svg
+    :target: https://github.com/openscm/OpenSCM-Calibration/actions?query=workflow%3A%22CI%22
+    :alt: CI status
+.. |Docs| image:: https://readthedocs.org/projects/openscm-calibration/badge/?version=latest
+    :target: https://openscm-calibration.readthedocs.io/en/latest/?badge=latest
+    :alt: Documentation status
+
+.. sec-end-links
+
 Calibration tools for simple climate models (and other things perhaps,
 surprise us with your applications).
+
+Full documentation can be found at https://openscm-calibration.readthedocs.io/.
 
 .. sec-end-description
 

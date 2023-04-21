@@ -29,6 +29,7 @@ For more usage examples, checkout :ref:`the notebooks <notebooks-reference>`.
    :caption: Contents:
 
    notebooks
+   development
 
 .. toctree::
     :maxdepth: 1

@@ -99,7 +99,7 @@ mathjax3_config = {"chtml": {"displayAlign": "center"}}
 
 # myst extensions
 myst_enable_extensions = ["amsmath", "dollarmath"]
-nb_execution_mode = "cache"
+nb_execution_mode = "inline"
 nb_execution_timeout = 120
 
 # -- Options for HTML output -------------------------------------------------

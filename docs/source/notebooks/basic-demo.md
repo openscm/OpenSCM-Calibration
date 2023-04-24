@@ -624,12 +624,12 @@ np.random.seed(424242)
 # the posterior appropriately, normally requires looking at the
 # chains and then just running them for longer if needed.
 # This number is definitely too small
-max_iterations = 80
+max_iterations = 60
 burnin = 10
 thin = 2
 
 ## Visualisation options
-plot_every = 20
+plot_every = 15
 convergence_ratio = 50
 parameter_order = [p[0] for p in parameters]
 neg_log_likelihood_name = "neg_ll"

@@ -28,6 +28,7 @@ checks:  ## run all the linting checks of the codebase
 		echo "=== pylint ==="; poetry run pylint src || echo "--- pylint failed ---" >&2; \
 		echo "=== pydocstyle ==="; poetry run pydocstyle src || echo "--- pydocstyle failed ---" >&2; \
 		echo "=== bandit ==="; poetry run bandit -r src --quiet || echo "--- bandit failed ---" >&2; \
+		echo "=== black docs ==="; poetry run blacken-docs --check docs/source/notebooks/*.md || echo "--- black docs failed ---" >&2; \
 		echo "======"
 
 .PHONY: black
@@ -45,6 +46,10 @@ test:  ## run the tests
 .PHONY: docs
 docs:  ## build the docs
 	poetry run sphinx-build -b html docs/source docs/build/html
+
+.PHONY: black-docs
+black-docs:  ## format the notebok examples using black
+	poetry run blacken-docs docs/source/notebooks/*.md
 
 .PHONY: check-commit-messages
 check-commit-messages:  ## check commit messages

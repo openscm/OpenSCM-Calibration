@@ -25,9 +25,6 @@ notebook = { version = "^6.5.3", optional = true }
 emcwrap = { version = "^0.2.4", optional = true }
 multiprocess = { version = "^0.70.14", optional = true }
 tqdm = { version = "^4.65.0", optional = true }
-# While waiting for a new release, see
-# https://github.com/dnanhkhoa/nb_black/issues/38
-nb-black = { git = "https://github.com/dnanhkhoa/nb_black.git", rev = "50c0f1",  optional = true }
 corner = { version = "^2.2.1", optional = true }
 seaborn = { version = "^0.12.2", optional = true }
 h5py = { version = "^3.8.0", optional = true }
@@ -60,6 +57,8 @@ pylint = "^2.17.1"
 bandit = "^1.7.5"
 pytest-cov = "^4.0.0"
 commitizen = "^2.42.1"
+blacken-docs = { git = "https://github.com/znicholls/blacken-docs.git", rev = "3e62e39" }
+tokenize-rt = "^5.0.0"
 
 [build-system]
 requires = ["poetry-core"]

@@ -46,8 +46,6 @@ jobs:
           poetry install --no-interaction --no-root --all-extras
       - name: Install package
         run: poetry install --no-interaction --all-extras
-      - name: docs
-        run: poetry run sphinx-build -W --keep-going -b html docs/source docs/build
       - name: flake8
         run: poetry run flake8 -v src tests
       - name: black
@@ -62,6 +60,10 @@ jobs:
         run: poetry run pydocstyle -v src
       - name: bandit
         run: poetry run bandit -r src
+      - name: docs-linting
+        run: poetry run blacken-docs --check docs/source/notebooks/*.md
+      - name: docs
+        run: poetry run sphinx-build -W --keep-going -b html docs/source docs/build
 
   tests:
     strategy:

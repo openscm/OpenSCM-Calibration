@@ -15,10 +15,6 @@ kernelspec:
 
 Here we give a basic demo of how to work with OpenSCM-Calibration.
 
-```{code-cell} ipython3
-%load_ext nb_black
-```
-
 ## Imports
 
 ```{code-cell} ipython3

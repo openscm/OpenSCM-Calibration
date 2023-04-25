@@ -26,16 +26,11 @@ For more usage examples, checkout :ref:`the notebooks <notebooks-reference>`.
 
 .. toctree::
    :maxdepth: 2
-   :caption: Contents:
+   :caption: Contents
 
    api
    notebooks
    development
-
-.. toctree::
-   :maxdepth: 2
-   :caption: Versions
-
    changelog
 
 Index

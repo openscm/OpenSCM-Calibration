@@ -31,6 +31,7 @@
    openscm_calibration.emcee_plotting
    openscm_calibration.emcee_utils
    openscm_calibration.iter_utils
+   openscm_calibration.matplotlib_utils
    openscm_calibration.minimize
    openscm_calibration.model_runner
    openscm_calibration.scipy_plotting

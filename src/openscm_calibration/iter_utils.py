@@ -7,6 +7,7 @@ import itertools
 from typing import Any, Iterable, List
 
 
+# TODO: remove, can use more_itertools.repeat_each instead
 def repeat_elements(inp: Iterable[Any], n_rep: int) -> List[Any]:
     """
     Repeat elements of an iterable ``n`` times

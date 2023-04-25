@@ -23,6 +23,7 @@ from typing import Dict, Tuple
 
 import emcee
 import matplotlib.pyplot as plt
+import more_itertools
 import numpy as np
 import pandas as pd
 import pint
@@ -39,7 +40,6 @@ from openscm_calibration.emcee_utils import (
     get_acceptance_fractions,
     get_autocorrelation_info,
 )
-from openscm_calibration.iter_utils import repeat_elements
 from openscm_calibration.minimize import to_minimize_full
 from openscm_calibration.model_runner import OptModelRunner
 from openscm_calibration.scipy_plotting import (
@@ -376,8 +376,8 @@ cost_name = "cost"
 timeseries_axes = list(convert_scmrun_to_plot_dict(target).keys())
 
 parameters_names = [v[0] for v in parameters]
-parameters_mosiac = repeat_elements(parameters_names, 1)
-timeseries_axes_mosiac = repeat_elements(timeseries_axes, 1)
+parameters_mosiac = list(more_itertools.repeat_each(parameters_names, 1))
+timeseries_axes_mosiac = list(more_itertools.repeat_each(timeseries_axes, 1))
 
 fig, axd = plt.subplot_mosaic(
     mosaic=[

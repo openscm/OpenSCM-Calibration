@@ -24,6 +24,7 @@ openscm\_calibration.scipy\_plotting
    .. autosummary::
    
       convert_target_to_model_output_units
+      get_optimisation_mosaic
       get_runs_to_plot
       get_timeseries_default
       get_ymax_default

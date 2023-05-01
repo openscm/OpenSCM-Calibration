@@ -99,9 +99,9 @@ jobs:
         run: |
           poetry config virtualenvs.create true
           poetry config virtualenvs.in-project true
-          poetry install --no-interaction --no-root
+          poetry install --no-interaction --no-root --only main
       - name: Install package
-        run: poetry install --no-interaction
+        run: poetry install --no-interaction --only main
       - name: Check importable without extras
         run: poetry run python scripts/test-install.py
       - name: Load cached full venv
@@ -114,7 +114,7 @@ jobs:
         run: |
           poetry config virtualenvs.create true
           poetry config virtualenvs.in-project true
-          poetry install --no-interaction --no-root --all-extras
+          poetry install --no-interaction --all-extras
       - name: Run tests
         run: |
           poetry run pytest -r a -v --doctest-modules --cov --cov-report=term-missing --cov-report=xml

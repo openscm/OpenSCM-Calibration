@@ -65,6 +65,11 @@ tokenize-rt = "^5.0.0"
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
 
+[tool.pytest.ini_options]
+addopts = [
+    "--import-mode=importlib",
+]
+
 [tool.isort]
 known_first_party = "openscm_calibration"
 default_section = "THIRDPARTY"

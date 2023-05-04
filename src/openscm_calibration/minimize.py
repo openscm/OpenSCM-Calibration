@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING, Optional, Protocol, Type, Union
 import numpy as np
 import scmdata.run
 
-from .store import OptResStore
+from openscm_calibration.store import OptResStore
 
 if TYPE_CHECKING:
     import numpy.typing as nptype

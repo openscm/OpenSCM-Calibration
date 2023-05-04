@@ -3,7 +3,7 @@ Minimisation helpers
 """
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Optional, Protocol, Type, Union
+from typing import TYPE_CHECKING, Protocol
 
 import numpy as np
 import scmdata.run
@@ -11,10 +11,10 @@ import scmdata.run
 from openscm_calibration.store import OptResStore
 
 if TYPE_CHECKING:
-    import numpy.typing as nptype
+    from openscm_calibration.type_hints import NPArrayFloatOrInt
 
 
-class SupportsCostCalculation(Protocol):  # pylint: disable=too-few-public-methods
+class SupportsCostCalculation(Protocol):
     """
     Class that supports cost calculations
     """
@@ -34,14 +34,14 @@ class SupportsCostCalculation(Protocol):  # pylint: disable=too-few-public-metho
         """
 
 
-class SupportsModelRun(Protocol):  # pylint: disable=too-few-public-methods
+class SupportsModelRun(Protocol):
     """
     Class that supports model runs
     """
 
     def run_model(
         self,
-        x: nptype.NDArray[Union[np.float_, np.int_]],  # pylint: disable=invalid-name
+        x: NPArrayFloatOrInt,
     ) -> scmdata.run.BaseScmRun:
         """
         Calculate cost function
@@ -58,11 +58,11 @@ class SupportsModelRun(Protocol):  # pylint: disable=too-few-public-methods
 
 
 def to_minimize_full(
-    x: nptype.NDArray[Union[np.float_, np.int_]],  # pylint: disable=invalid-name
+    x: NPArrayFloatOrInt,
     cost_calculator: SupportsCostCalculation,
     model_runner: SupportsModelRun,
-    store: Optional[OptResStore] = None,
-    known_error: Optional[Type[ValueError]] = None,
+    store: OptResStore | None = None,
+    known_error: type[ValueError] | None = None,
 ) -> float:
     """
     Calculate cost for given set of parameters

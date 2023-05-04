@@ -1,3 +1,6 @@
+"""
+Tests of :mod:`openscm_calibration.emcee_utils`
+"""
 from unittest.mock import Mock
 
 import numpy as np

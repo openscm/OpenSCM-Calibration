@@ -1,11 +1,5 @@
-[tool.commitizen]
-version = "0.5.0"
-version_files = ["pyproject.toml:^version"]
-tag_format = "v$version"
-major_version_zero = true
-
-[tool.jupytext]
-formats = "ipynb,myst"
+[tool.coverage.run]
+source = ["openscm_calibration"]
 
 [tool.poetry]
 name = "openscm-calibration"
@@ -43,23 +37,20 @@ multiprocess = "^0.70.14"
 [tool.poetry.group.docs.dependencies]
 myst-nb = "^0.17.0"
 sphinx-rtd-theme = "^1.2.0"
-# While we wait for https://github.com/tox-dev/sphinx-autodoc-typehints/pull/345
-sphinx-autodoc-typehints = { git = "https://github.com/znicholls/sphinx-autodoc-typehints.git", rev = "b28ad12" }
+sphinx-autodoc-typehints = "^1.23.0"
 jupytext = "^1.14.5"
 sphinx-copybutton = "^0.5.2"
 
 [tool.poetry.group.dev.dependencies]
 black = "^23.1.0"
 flake8 = "^6.0.0"
-isort = "^5.12.0"
 mypy = "^1.1.1"
-pydocstyle = {extras = ["toml"], version = "^6.3.0"}
-pylint = "^2.17.1"
-bandit = "^1.7.5"
 pytest-cov = "^4.0.0"
 commitizen = "^2.42.1"
+# Waiting on https://github.com/adamchainz/blacken-docs/issues/240
 blacken-docs = { git = "https://github.com/znicholls/blacken-docs.git", rev = "3e62e39" }
 tokenize-rt = "^5.0.0"
+ruff = "^0.0.264"
 
 [build-system]
 requires = ["poetry-core"]
@@ -69,17 +60,6 @@ build-backend = "poetry.core.masonry.api"
 addopts = [
     "--import-mode=importlib",
 ]
-
-[tool.isort]
-known_first_party = "openscm_calibration"
-default_section = "THIRDPARTY"
-profile = "black"
-# comma after multiline breaks like black:
-include_trailing_comma = true
-# black default line length:
-line_length = 88
-# multiline breaks like black:
-multi_line_output = 3
 
 [tool.mypy]
 disallow_any_generics = true
@@ -101,28 +81,6 @@ no_implicit_reexport = true
 strict_equality = true
 strict_optional = true
 
-[tool.pylint.messages_control]
-disable = ["format"]
-
-[tool.pydocstyle]
-# D213 - Multi-line docstring summary should start at the second line
-# D402 - First line should not be the function's "signature"
-add_select = "D213, D402"
-
-# D105 - Missing docstring in magic method
-# D200 - One-line docstring should fit on one line with quotes
-# D205 - 1 blank line required between summary line and description
-# D400 - First line should end with a period
-add_ignore = "D200, D205, D400, D105"
-
-convention = "numpy"
-inherit = false
-
-[tool.bandit]
-
-[tool.coverage.run]
-source = ["openscm_calibration"]
-
 [tool.coverage.report]
 fail_under = 95
 skip_empty = true
@@ -133,3 +91,48 @@ exclude_lines = [
     # Don't complain about missing type checking code:
     "if TYPE_CHECKING",
 ]
+
+[tool.commitizen]
+version = "0.5.0"
+version_files = ["pyproject.toml:^version"]
+tag_format = "v$version"
+major_version_zero = true
+
+[tool.jupytext]
+formats = "ipynb,myst"
+
+[tool.ruff]
+src = ["src"]
+target-version = "py39"
+select = [
+    "E",  # pycodestyle error
+    "W",  # pycodestyle warning
+    "F",  # pyflakes
+    "I",  # isort
+    "D",  # pydocstyle
+    "D213",  # Multi-line docstring summary should start at the second line
+    "D213",  # Multi-line docstring summary should start at the second line
+    "PL",  # pylint
+    "TRY",  # tryceratops
+    "NPY",  # numpy rules
+    "RUF",  # ruff specifics
+    "ERA",  # eradicate
+    "PD",  # pandas support via pandas-vet
+    "UP",  # pyupgrade
+    "S",  # flake8-bandit
+]
+ignore = [
+    "D200",  # One-line docstring should fit on one line with quotes
+    "D400",  # First line should end with a period
+]
+# Provide some leeway for long docstring, this is otherwise handled by black
+line-length = 100
+
+[tool.ruff.per-file-ignores]
+"test*.py" = ["D103", "S101", "PLR0913", "PLR2004"]
+
+[tool.ruff.isort]
+known-first-party = ["src"]
+
+[tool.ruff.pydocstyle]
+convention = "numpy"

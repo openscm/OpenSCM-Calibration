@@ -8,12 +8,12 @@ from typing import TYPE_CHECKING
 import numpy as np
 
 if TYPE_CHECKING:
-    from typing import Dict, List, Optional, Union
-
     # See here for explanation of this pattern and why we don't need quotes
     # below https://docs.python.org/3/library/typing.html#constant
     import emcee.backends
     import numpy.typing as nptype
+
+    from openscm_calibration.type_hints import NPAnyFloat, NPArrayFloatOrInt
 
 
 def get_acceptance_fractions(
@@ -53,7 +53,7 @@ def get_autocorrelation_info(
     thin: int = 1,
     autocorr_tol: int = 0,
     convergence_ratio: float = 50,
-) -> Dict[str, Union[float, int, bool, nptype.NDArray[np.float_]]]:
+) -> dict[str, float | int | bool | nptype.NDArray[NPAnyFloat]]:
     """
     Get info about autocorrelation in chains
 
@@ -109,12 +109,12 @@ def get_autocorrelation_info(
 
 
 def get_labelled_chain_data(
-    inp: Union[emcee.backends.Backend],
-    parameter_order: List[str],
-    neg_log_likelihood_name: Optional[str] = None,
+    inp: emcee.backends.Backend,
+    parameter_order: list[str],
+    neg_log_likelihood_name: str | None = None,
     burnin: int = 0,
     thin: int = 0,
-) -> Dict[str, nptype.NDArray[Union[np.float_, np.int_]]]:
+) -> dict[str, NPArrayFloatOrInt]:
     """
     Get labelled chain data
 

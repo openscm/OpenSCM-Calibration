@@ -1,3 +1,6 @@
+"""
+Tests of :mod:`openscm_calibration.cost`
+"""
 import re
 
 import numpy as np
@@ -8,6 +11,7 @@ import scmdata.run
 import scmdata.testing
 
 from openscm_calibration.cost import OptCostCalculatorSSE
+from openscm_calibration.exceptions import AlignmentError, MissingValueError
 
 
 @pytest.fixture()
@@ -17,7 +21,7 @@ def dummy_model_col():
 
 @pytest.fixture()
 def dummy_target(dummy_model_col):
-    df = pd.DataFrame(
+    timeseries = pd.DataFrame(
         [[1, 1.2], [2.3, 2.6]],
         columns=[2010, 2020],
         index=pd.MultiIndex.from_tuples(
@@ -29,7 +33,7 @@ def dummy_target(dummy_model_col):
         ),
     )
 
-    return scmdata.run.BaseScmRun(df)
+    return scmdata.run.BaseScmRun(timeseries)
 
 
 @pytest.fixture()
@@ -68,10 +72,10 @@ def test_normalisation_misaligned_with_target(
     )
 
     error_msg = re.escape(
-        "target and normalisation are somehow misaligned "
-        "(passing self.target to self.calculate_cost results in nan), please check."
+        "Note we have aligned the timeseries so that nan values appear where "
+        "there are alignment issues"
     )
-    with pytest.raises(ValueError, match=error_msg):
+    with pytest.raises(AlignmentError, match=error_msg):
         OptCostCalculatorSSE(
             target=dummy_target,
             normalisation=normalisation_in,
@@ -106,10 +110,10 @@ def test_normalisation_unit_agnostic(
 
 def test_model_col_missing_raises(dummy_target, dummy_normalisation):
     error_msg = re.escape(
-        "value of ``model_col``, 'junk' is not in the metadata of target. "
-        "Available metadata: "
+        "``instance.target.meta_attributes`` is missing values: ``junk``. "
+        "Available values: ``['climate_model', 'unit', 'variable']``"
     )
-    with pytest.raises(KeyError, match=error_msg):
+    with pytest.raises(MissingValueError, match=error_msg):
         OptCostCalculatorSSE(
             target=dummy_target,
             normalisation=dummy_normalisation,
@@ -256,10 +260,11 @@ def test_from_series_normalisation_missing_required_col(
     norm_series = norm_series.reset_index(required_col, drop=True)
 
     error_msg = re.escape(
-        "normalisation is missing required column(s): "
-        f"``{sorted(set(required_col))}``"
+        "``normalisation_series.index.names`` is missing values: "
+        f"``{sorted(set(required_col))}``. Available values: "
+        f"``{sorted(set(norm_series.index.names))}``"
     )
-    with pytest.raises(KeyError, match=error_msg):
+    with pytest.raises(MissingValueError, match=error_msg):
         OptCostCalculatorSSE.from_series_normalisation(
             target=dummy_target,
             normalisation_series=norm_series,
@@ -279,8 +284,8 @@ def test_from_series_normalisation_misaligned(dummy_target, dummy_model_col):
         ),
     )
 
-    error_msg = re.escape("Even after aligning, there are still nan values.")
-    with pytest.raises(ValueError, match=error_msg):
+    error_msg = re.escape("Even after aligning, there are still nan values")
+    with pytest.raises(AlignmentError, match=error_msg):
         OptCostCalculatorSSE.from_series_normalisation(
             target=dummy_target,
             normalisation_series=norm_series,
@@ -305,7 +310,7 @@ def test_from_series_normalisation_extra_val(dummy_target, dummy_model_col):
         "After aligning, there are more rows in the normalisation than "
         "in the target."
     )
-    with pytest.raises(ValueError, match=error_msg):
+    with pytest.raises(AlignmentError, match=error_msg):
         OptCostCalculatorSSE.from_series_normalisation(
             target=dummy_target,
             normalisation_series=norm_series,

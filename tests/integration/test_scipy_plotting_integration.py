@@ -1,3 +1,6 @@
+"""
+Integration tests of :mod:`openscm_calibration.scipy_plotting`
+"""
 import numpy as np
 import pandas as pd
 import pandas.testing as pdt
@@ -26,12 +29,12 @@ def test_get_timeseries_default(time_axis, years, years_exp):
         [(name, "K") for name in ["dT", "dT_Ocean"]], names=("variable", "unit")
     )
 
-    df = pd.DataFrame(
+    inp_ts = pd.DataFrame(
         np.random.random(size=(index.size, len(years))),
         columns=years,
         index=index,
     )
-    inp = scmdata.run.BaseScmRun(df)
+    inp = scmdata.run.BaseScmRun(inp_ts)
 
     call_kwargs = {}
 
@@ -41,7 +44,7 @@ def test_get_timeseries_default(time_axis, years, years_exp):
 
     res = get_timeseries_default(inp, **call_kwargs)
 
-    exp = df.set_index(["variable", "unit"]).T
+    exp = inp_ts.set_index(["variable", "unit"]).T
     exp.index = years_exp
     exp.index.name = "time"
     exp.columns = exp.columns.reorder_levels(res.columns.names)

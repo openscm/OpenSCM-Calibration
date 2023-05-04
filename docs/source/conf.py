@@ -97,9 +97,9 @@ typehints_use_rtype = False
 # Left-align maths equations
 mathjax3_config = {"chtml": {"displayAlign": "center"}}
 
-# myst extensions
+# myst-nb
 myst_enable_extensions = ["amsmath", "dollarmath"]
-nb_execution_mode = "inline"
+nb_execution_mode = "auto"
 nb_execution_raise_on_error = True
 nb_execution_show_tb = True
 nb_execution_timeout = 120

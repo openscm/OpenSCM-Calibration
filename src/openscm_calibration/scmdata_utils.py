@@ -3,7 +3,8 @@ scmdata utility functions
 """
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Dict, Iterable
+from collections.abc import Iterable
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     import scmdata.run
@@ -11,7 +12,7 @@ if TYPE_CHECKING:
 
 def scmrun_as_dict(
     inp: scmdata.run.BaseScmRun, groups: Iterable[str], separator: str = "_"
-) -> Dict[str, scmdata.run.BaseScmRun]:
+) -> dict[str, scmdata.run.BaseScmRun]:
     """
     Group an :obj:`scmdata.run.BaseScmRun` into a dictionary with keys
 

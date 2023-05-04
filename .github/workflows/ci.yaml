@@ -46,20 +46,12 @@ jobs:
           poetry install --no-interaction --no-root --all-extras
       - name: Install package
         run: poetry install --no-interaction --all-extras
-      - name: flake8
-        run: poetry run flake8 -v src tests
       - name: black
         run: poetry run black --check src tests docs/source/conf.py
-      - name: isort
-        run: poetry run isort -v --check-only src tests
+      - name: ruff
+        run: poetry run ruff check src tests scripts
       - name: mypy
         run: poetry run mypy src
-      - name: pylint
-        run: poetry run pylint src
-      - name: pydocstyle
-        run: poetry run pydocstyle -v src
-      - name: bandit
-        run: poetry run bandit -r src
       - name: docs-linting
         run: poetry run blacken-docs --check docs/source/notebooks/*.md
       - name: docs

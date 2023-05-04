@@ -5,17 +5,12 @@ from __future__ import annotations
 
 import logging
 import warnings
+from collections.abc import Iterable
 from typing import (
     TYPE_CHECKING,
     Any,
     Callable,
-    Dict,
-    Iterable,
-    List,
-    Optional,
     Protocol,
-    Tuple,
-    Union,
 )
 
 import more_itertools
@@ -23,17 +18,18 @@ import numpy as np
 import scmdata
 from attrs import define, field
 
+from openscm_calibration.exceptions import MissingValueError
 from openscm_calibration.matplotlib_utils import get_fig_axes_holder_from_mosaic
 
 if TYPE_CHECKING:
     import attr
     import matplotlib
-    import numpy.typing as nptype
     import pandas as pd
     import scmdata.run
     import tqdm
 
     from openscm_calibration.store import OptResStore
+    from openscm_calibration.type_hints import NPArrayFloatOrInt
 
 
 logger: logging.Logger = logging.getLogger(__name__)
@@ -47,7 +43,7 @@ class SupportsScipyOptCallback(Protocol):
 
     def callback_minimize(
         self,
-        xk: nptype.NDArray[Union[np.float_, np.int_]],  # pylint:disable=invalid-name
+        xk: NPArrayFloatOrInt,
     ) -> None:
         """
         Get cost of parameter vector
@@ -62,8 +58,8 @@ class SupportsScipyOptCallback(Protocol):
 
     def callback_differential_evolution(
         self,
-        xk: nptype.NDArray[Union[np.float_, np.int_]],  # pylint:disable=invalid-name
-        convergence: Optional[float] = None,
+        xk: NPArrayFloatOrInt,
+        convergence: float | None = None,
     ) -> None:
         """
         Get cost of parameter vector
@@ -82,7 +78,7 @@ class SupportsScipyOptCallback(Protocol):
         """
 
 
-class SupportsFigUpdate(Protocol):  # pylint:disable=too-few-public-methods
+class SupportsFigUpdate(Protocol):
     """
     Class that supports updating figures
 
@@ -112,7 +108,7 @@ class SupportsFigUpdate(Protocol):  # pylint:disable=too-few-public-methods
 
 
 ScmRunToDictConverter = Callable[
-    [scmdata.run.BaseScmRun], Dict[str, scmdata.run.BaseScmRun]
+    [scmdata.run.BaseScmRun], dict[str, scmdata.run.BaseScmRun]
 ]
 """
 Type hint helper for functions used as ``convert_scmrun_to_plot_dict``
@@ -122,10 +118,16 @@ Such functions convert an :obj:`scmdata.run.BaseScmRun` to a dictionary of
 """
 
 
+class NoSuccessfulRunsError(ValueError):
+    """
+    Raised when no runs completed successfully i.e. there is nothing to plot
+    """
+
+
 def _all_in_axes(
-    instance: OptPlotter,  # pylint: disable=unused-argument
-    attribute: attr.Attribute[Tuple[str]],
-    value: Tuple[str],
+    instance: OptPlotter,
+    attribute: attr.Attribute[tuple[str]],
+    value: tuple[str],
 ) -> None:
     """
     Check all values are present in ``self.axes``
@@ -146,21 +148,19 @@ def _all_in_axes(
     ValueError
         Not all elements in ``value`` are keys in ``self.axes``
     """
-    missing_from_axes = [k for k in value if k not in instance.axes]
-    if missing_from_axes:
-        error_msg = (
-            f"Error setting '{attribute.name}'. "
-            "The following keys are missing from ``self.axes``: "
-            f"``{missing_from_axes}``. "
-            f"``self.axes.keys()`` is ``{instance.axes.keys()}``."
+    values_without_axes = [k for k in value if k not in instance.axes]
+    if values_without_axes:
+        raise MissingValueError(
+            "self.axes",
+            vals=list(instance.axes.keys()),
+            missing_vals=values_without_axes,
         )
-        raise KeyError(error_msg)
 
 
 def _compatible_with_convert_and_target(
-    instance: OptPlotter,  # pylint: disable=unused-argument
-    attribute: attr.Attribute[Tuple[str]],
-    value: Tuple[str],
+    instance: OptPlotter,
+    attribute: attr.Attribute[tuple[str]],
+    value: tuple[str],
 ) -> None:
     """
     Check that the values are compatible with the target and the ScmRun conversion
@@ -189,14 +189,11 @@ def _compatible_with_convert_and_target(
     target_converted = instance.convert_scmrun_to_plot_dict(instance.target)
     missing_from_target_converted = [k for k in value if k not in target_converted]
     if missing_from_target_converted:
-        error_msg = (
-            f"Error setting '{attribute.name}'. "
-            "The following keys are missing when "
-            "``self.convert_scmrun_to_plot_dict`` is applied to "
-            f"``self.target``: ``{missing_from_target_converted}``. "
-            f"``target_converted.keys()`` is ``{target_converted.keys()}``."
+        raise MissingValueError(
+            "self.axes",
+            vals=list(instance.axes.keys()),
+            missing_vals=missing_from_target_converted,
         )
-        raise ValueError(error_msg)
 
 
 @define
@@ -216,7 +213,7 @@ class OptPlotter:
     fig: matplotlib.figure.Figure
     """Figure on which to plot"""
 
-    axes: Dict[str, matplotlib.axes.Axes]
+    axes: dict[str, matplotlib.axes.Axes]
     """
     Dictionary storing axes on which to plot
 
@@ -234,7 +231,7 @@ class OptPlotter:
     cost_key: str
     """Key for the axes on which the cost function should be plotted"""
 
-    parameters: Tuple[str, ...] = field(validator=[_all_in_axes])
+    parameters: tuple[str, ...] = field(validator=[_all_in_axes])
     """
     Parameters to be optimised
 
@@ -243,7 +240,7 @@ class OptPlotter:
     values onto the desired axes.
     """
 
-    timeseries_axes: Tuple[str, ...] = field(
+    timeseries_axes: tuple[str, ...] = field(
         validator=[_all_in_axes, _compatible_with_convert_and_target]
     )
     """
@@ -275,16 +272,16 @@ class OptPlotter:
     plots. Plotting all runs can be very expensive.
     """
 
-    plot_cost_kwargs: Optional[Dict[str, Any]] = None
+    plot_cost_kwargs: dict[str, Any] | None = None
     """Kwargs to pass to :func:`plot_costs`."""
 
-    plot_parameters_kwargs: Optional[Dict[str, Any]] = None
+    plot_parameters_kwargs: dict[str, Any] | None = None
     """Kwargs to pass to :func:`plot_parameters`."""
 
-    plot_timeseries_kwargs: Optional[Dict[str, Any]] = None
+    plot_timeseries_kwargs: dict[str, Any] | None = None
     """Kwargs to pass to :func:`plot_timeseries`."""
 
-    get_timeseries: Optional[Callable[[scmdata.run.BaseScmRun], pd.DataFrame]] = None
+    get_timeseries: Callable[[scmdata.run.BaseScmRun], pd.DataFrame] | None = None
     """
     Function which converts :obj:`scmdata.run.BaseScmRun` into a :obj:`pd.DataFrame` for plotting
 
@@ -293,9 +290,7 @@ class OptPlotter:
 
     def callback_minimize(
         self,
-        xk: nptype.NDArray[  # pylint:disable=invalid-name, unused-argument
-            Union[np.float_, np.int_]
-        ],
+        xk: NPArrayFloatOrInt,
     ) -> None:
         """
         Update the plots
@@ -312,10 +307,8 @@ class OptPlotter:
 
     def callback_differential_evolution(
         self,
-        xk: nptype.NDArray[  # pylint:disable=invalid-name, unused-argument
-            Union[np.float_, np.int_]
-        ],
-        convergence: Optional[float] = None,  # pylint:disable=unused-argument
+        xk: NPArrayFloatOrInt,
+        convergence: float | None = None,
     ) -> None:
         """
         Update the plots
@@ -336,15 +329,15 @@ class OptPlotter:
         self.update_plots()
 
     @classmethod
-    def from_autogenerated_figure(  # pylint:disable=too-many-arguments
+    def from_autogenerated_figure(  # noqa: PLR0913
         cls,
         cost_key: str,
-        params: Tuple[str],
+        params: tuple[str],
         convert_scmrun_to_plot_dict: ScmRunToDictConverter,
         target: scmdata.run.BaseScmRun,
         store: OptResStore,
-        kwargs_create_mosaic: Optional[Dict[str, Any]] = None,
-        kwargs_get_fig_axes_holder: Optional[Dict[str, Any]] = None,
+        kwargs_create_mosaic: dict[str, Any] | None = None,
+        kwargs_get_fig_axes_holder: dict[str, Any] | None = None,
         **kwargs: Any,
     ) -> OptPlotter:
         """
@@ -512,12 +505,12 @@ def get_timeseries_default(
     return inp.timeseries(time_axis=time_axis).T
 
 
-def plot_costs(  # pylint:disable=too-many-arguments
-    ax: matplotlib.axes.Axes,  # pylint:disable=invalid-name
+def plot_costs(  # noqa: PLR0913
+    ax: matplotlib.axes.Axes,
     ylabel: str,
-    costs: Tuple[float, ...],
+    costs: tuple[float, ...],
     ymin: float = 0.0,
-    get_ymax: Optional[Callable[[Tuple[float, ...]], float]] = None,
+    get_ymax: Callable[[tuple[float, ...]], float] | None = None,
     alpha: float = 0.7,
     **kwargs: Any,
 ) -> None:
@@ -565,7 +558,7 @@ def plot_costs(  # pylint:disable=too-many-arguments
 
 
 def get_ymax_default(
-    costs: Tuple[float, ...],
+    costs: tuple[float, ...],
     min_scale_factor: float = 10.0,
     min_v_median_scale_factor: float = 2.0,
 ) -> float:
@@ -613,8 +606,8 @@ def get_ymax_default(
 
 
 def plot_parameters(
-    axes: Dict[str, matplotlib.axes.Axes],
-    para_vals: Dict[str, nptype.NDArray[Union[np.float_, np.int_]]],
+    axes: dict[str, matplotlib.axes.Axes],
+    para_vals: dict[str, NPArrayFloatOrInt],
     alpha: float = 0.7,
     **kwargs: Any,
 ) -> None:
@@ -640,7 +633,7 @@ def plot_parameters(
         axes[parameter].set_ylabel(parameter)
 
 
-DEFAULT_PLOT_TIMESERIES_BACKGROUND_TS_KWARGS: Dict[str, Any] = {
+DEFAULT_PLOT_TIMESERIES_BACKGROUND_TS_KWARGS: dict[str, Any] = {
     "legend": False,
     "linewidth": 0.5,
     "alpha": 0.3,
@@ -655,7 +648,7 @@ starting point
 """
 
 
-DEFAULT_PLOT_TIMESERIES_TARGET_TS_KWARGS: Dict[str, Any] = {
+DEFAULT_PLOT_TIMESERIES_TARGET_TS_KWARGS: dict[str, Any] = {
     "legend": False,
     "linewidth": 2,
     "alpha": 0.8,
@@ -670,7 +663,7 @@ starting point
 """
 
 
-DEFAULT_PLOT_TIMESERIES_BEST_TS_KWARGS: Dict[str, Any] = {
+DEFAULT_PLOT_TIMESERIES_BEST_TS_KWARGS: dict[str, Any] = {
     "legend": False,
     "linewidth": 2,
     "alpha": 0.8,
@@ -685,20 +678,20 @@ starting point
 """
 
 
-def plot_timeseries(  # pylint:disable=too-many-arguments,too-many-locals
+def plot_timeseries(  # noqa: PLR0913,too-many-locals
     best_run: scmdata.run.BaseScmRun,
     others_to_plot: scmdata.run.BaseScmRun,
     target: scmdata.run.BaseScmRun,
     convert_scmrun_to_plot_dict: Callable[
-        [scmdata.run.BaseScmRun], Dict[str, scmdata.run.BaseScmRun]
+        [scmdata.run.BaseScmRun], dict[str, scmdata.run.BaseScmRun]
     ],
     timeseries_keys: Iterable[str],
-    axes: Dict[str, matplotlib.axes.Axes],
+    axes: dict[str, matplotlib.axes.Axes],
     get_timeseries: Callable[[scmdata.run.BaseScmRun], pd.DataFrame],
-    background_ts_kwargs: Optional[Dict[str, Any]] = None,
-    target_ts_kwargs: Optional[Dict[str, Any]] = None,
-    best_ts_kwargs: Optional[Dict[str, Any]] = None,
-    ylabel_kwargs: Optional[Dict[str, Any]] = None,
+    background_ts_kwargs: dict[str, Any] | None = None,
+    target_ts_kwargs: dict[str, Any] | None = None,
+    best_ts_kwargs: dict[str, Any] | None = None,
+    ylabel_kwargs: dict[str, Any] | None = None,
 ) -> None:
     """
     Plot timeseries
@@ -766,7 +759,7 @@ def plot_timeseries(  # pylint:disable=too-many-arguments,too-many-locals
     target_runs = convert_scmrun_to_plot_dict(target)
 
     for k in timeseries_keys:
-        ax = axes[k]  # pylint: disable=invalid-name
+        ax = axes[k]
         best_k = best_run_d[k]
         background_runs = others_to_plot_d[k]
         model_unit = background_runs.get_unique_meta("unit", True)
@@ -807,10 +800,10 @@ def plot_timeseries(  # pylint:disable=too-many-arguments,too-many-locals
 
 
 def get_runs_to_plot(
-    costs: Tuple[float, ...],
-    res: Tuple[scmdata.run.BaseScmRun, ...],
+    costs: tuple[float, ...],
+    res: tuple[scmdata.run.BaseScmRun, ...],
     thin_ts_to_plot: int,
-) -> Tuple[scmdata.run.BaseScmRun, scmdata.run.BaseScmRun]:
+) -> tuple[scmdata.run.BaseScmRun, scmdata.run.BaseScmRun]:
     """
     Get runs to plot
 
@@ -845,14 +838,14 @@ def get_runs_to_plot(
     # Convert to dict for quicker lookup later
     res_d_success = {i: v for i, v in enumerate(res) if v is not None}
     if not res_d_success:
-        raise ValueError("No successful runs, please check")
+        raise NoSuccessfulRunsError()
 
     best_it = int(np.argmin(costs))
     out_best = res_d_success[best_it]
 
     success_keys = list(res_d_success.keys())
     to_plot_not_best = success_keys[
-        len(success_keys) - 1 :: -thin_ts_to_plot  # noqa: E203 (prefer black)
+        len(success_keys) - 1 :: -thin_ts_to_plot  # (prefer black)
     ]
     if best_it in to_plot_not_best:
         to_plot_not_best.remove(best_it)
@@ -885,12 +878,12 @@ class CallbackProxy:
     update_every: int = 50
     """Update the plots every X calls to the model"""
 
-    progress_bar: Optional[tqdm.std.tqdm] = None
+    progress_bar: tqdm.std.tqdm | None = None
     """Progress bar to track iterations"""
 
     def callback_minimize(
         self,
-        xk: nptype.NDArray[Union[np.float_, np.int_]],  # pylint:disable=invalid-name
+        xk: NPArrayFloatOrInt,
     ) -> None:
         """
         Update the plots
@@ -908,8 +901,8 @@ class CallbackProxy:
 
     def callback_differential_evolution(
         self,
-        xk: nptype.NDArray[Union[np.float_, np.int_]],  # pylint:disable=invalid-name
-        convergence: Optional[float] = None,
+        xk: NPArrayFloatOrInt,
+        convergence: float | None = None,
     ) -> None:
         """
         Update the plots
@@ -960,11 +953,12 @@ class CallbackProxy:
 
         Raises
         ------
-        ValueError
-            ``self.progress_bar`` is not set
+        TypeError
+            ``self.progress_bar`` is ``None``. This typically happens if it
+            was not set at the time the :obj:`CallbackProxy` was initialised.
         """
-        if not self.progress_bar:
-            raise ValueError("``self.progress_bar`` is not set")
+        if self.progress_bar is None:
+            raise TypeError(self.progress_bar)
 
         self.progress_bar.update(n_model_calls - self.progress_bar.last_print_n)
 
@@ -1012,14 +1006,14 @@ def convert_target_to_model_output_units(
     return out
 
 
-def get_optimisation_mosaic(  # pylint:disable=too-many-arguments
+def get_optimisation_mosaic(  # noqa: PLR0913
     cost_key: str,
-    params: Tuple[str, ...],
-    timeseries: Tuple[str, ...],
+    params: tuple[str, ...],
+    timeseries: tuple[str, ...],
     cost_col_relwidth: int = 1,
     n_parameters_per_row: int = 1,
     n_timeseries_per_row: int = 1,
-) -> List[List[str]]:
+) -> list[list[str]]:
     """
     Get optimisation mosaic
 

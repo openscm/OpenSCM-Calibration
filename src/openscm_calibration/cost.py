@@ -8,6 +8,8 @@ from typing import TYPE_CHECKING
 import numpy as np
 from attrs import define, field
 
+from openscm_calibration.exceptions import AlignmentError, MissingValueError
+
 if TYPE_CHECKING:
     import attr
     import pandas as pd
@@ -19,24 +21,22 @@ def _works_with_self_target(
     attribute: attr.Attribute[scmdata.run.BaseScmRun],
     value: scmdata.run.BaseScmRun,
 ) -> None:
-    def _get_msg() -> str:
-        target_ts = instance.target.timeseries()
-        value_ts = value.timeseries()
-
-        msg = (
-            "target and normalisation are somehow misaligned "
-            "(passing self.target to self.calculate_cost results "
-            "in nan), please check.\n"
-            f"target timeseries:\n{target_ts}\n"
-            f"{attribute.name} timeseries:\n{value_ts}"
-        )
-
-        return msg
-
     try:
         instance.calculate_cost(instance.target)
     except KeyError as exc:
-        raise ValueError(_get_msg()) from exc
+        value_aligned, target_ts_aligned = value.timeseries().align(
+            instance.target.timeseries(), axis="rows"
+        )
+        raise AlignmentError(
+            name_left="self.target",
+            val_left=target_ts_aligned,
+            name_right=attribute.name,
+            val_right=value_aligned,
+            extra_context=(
+                "Note we have aligned the timeseries "
+                "so that nan values appear where there are alignment issues"
+            ),
+        ) from exc
 
 
 def _is_meta_in_target(
@@ -46,16 +46,15 @@ def _is_meta_in_target(
 ) -> None:
     available_metadata = instance.target.meta_attributes
     if value not in available_metadata:
-        msg = (
-            f"value of ``{attribute.name}``, '{value}' is not in the metadata "
-            f"of target. Available metadata: {available_metadata}"
+        raise MissingValueError(
+            "instance.target.meta_attributes",
+            vals=available_metadata,
+            missing_vals=value,
         )
-
-        raise KeyError(msg)
 
 
 @define
-class OptCostCalculatorSSE:  # pylint: disable=too-few-public-methods
+class OptCostCalculatorSSE:
     """
     Cost calculator based on sum of squared errors
 
@@ -140,13 +139,14 @@ class OptCostCalculatorSSE:  # pylint: disable=too-few-public-methods
             Initialised :obj:`OptCostCalculatorSSE`
         """
         required_columns = {"variable", "unit"}
-        missing_cols = required_columns - set(normalisation_series.index.names)
+        available_cols = set(normalisation_series.index.names)
+        missing_cols = required_columns - available_cols
         if missing_cols:
-            msg = (
-                "normalisation is missing required column(s): "
-                f"``{sorted(missing_cols)}``"
+            raise MissingValueError(
+                "normalisation_series.index.names",
+                vals=sorted(available_cols),
+                missing_vals=sorted(missing_cols),
             )
-            raise KeyError(msg)
 
         target_ts_no_unit = target.timeseries().reset_index("unit", drop=True)
 
@@ -154,22 +154,26 @@ class OptCostCalculatorSSE:  # pylint: disable=too-few-public-methods
         # align and then broadcast
         norm_series_aligned, _ = normalisation_series.align(target_ts_no_unit)
 
-        if norm_series_aligned.isnull().any().any():
-            msg = (
-                "Even after aligning, there are still nan values.\n"
-                f"norm_series_aligned:\n{norm_series_aligned}\n"
-                f"target_ts_no_unit:\n{target_ts_no_unit}"
+        if norm_series_aligned.isna().any().any():
+            raise AlignmentError(
+                name_left="target_ts_no_unit",
+                val_left=target_ts_no_unit,
+                name_right="norm_series_aligned",
+                val_right=norm_series_aligned,
+                extra_context="Even after aligning, there are still nan values",
             )
-            raise ValueError(msg)
 
         if norm_series_aligned.shape[0] != target_ts_no_unit.shape[0]:
-            msg = (
-                "After aligning, there are more rows in the normalisation "
-                "than in the target.\n"
-                f"norm_series_aligned:\n{norm_series_aligned}\n"
-                f"target_ts_no_unit:\n{target_ts_no_unit}"
+            raise AlignmentError(
+                name_left="target_ts_no_unit",
+                val_left=target_ts_no_unit,
+                name_right="norm_series_aligned",
+                val_right=norm_series_aligned,
+                extra_context=(
+                    "After aligning, there are more rows in the normalisation "
+                    "than in the target"
+                ),
             )
-            raise ValueError(msg)
 
         norm_series_aligned = type(target_ts_no_unit)(
             np.broadcast_to(norm_series_aligned.values, target_ts_no_unit.T.shape).T,
@@ -201,6 +205,6 @@ class OptCostCalculatorSSE:  # pylint: disable=too-few-public-methods
             op_cols={self.model_col: "(res - target) / normalisation"},
         )
 
-        cost = float((diff.convert_unit("1") ** 2).values.sum().sum())
+        cost = float((diff.convert_unit("1") ** 2).values.sum().sum())  # noqa: PD011
 
         return cost

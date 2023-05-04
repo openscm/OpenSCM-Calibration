@@ -3,17 +3,13 @@ Model runner class
 """
 from __future__ import annotations
 
+from collections.abc import Iterable
 from functools import partial
 from typing import (
     TYPE_CHECKING,
     Any,
     Callable,
-    Dict,
-    Iterable,
-    Optional,
     Protocol,
-    Tuple,
-    Union,
 )
 
 import numpy as np
@@ -21,39 +17,40 @@ import openscm_units
 from attrs import define
 
 if TYPE_CHECKING:
-    import numpy.typing as nptype
     import pint
     import scmdata.run
 
+    from openscm_calibration.type_hints import NPAnyFloat, NPArrayFloatOrInt
 
-class XToNamedPintConvertor(Protocol):  # pylint: disable=too-few-public-methods
+
+class XToNamedPintConvertor(Protocol):
     """
     Callable that supports converting the x-array to Pint quantities
     """
 
     def __call__(
         self,
-        x: nptype.NDArray[Union[np.float_, np.int_]],  # pylint: disable=invalid-name
-    ) -> Dict[str, Union[pint.Quantity[np.float_], np.float_]]:
+        x: NPArrayFloatOrInt,
+    ) -> dict[str, pint.Quantity[np.float_] | np.float_]:
         """
         Convert x to pint quantities
         """
 
 
-class ModelRunsInputGenerator(Protocol):  # pylint: disable=too-few-public-methods
+class ModelRunsInputGenerator(Protocol):
     """
     Callable that supports generating model run inputs
     """
 
     def __call__(
-        self, **kwargs: Union[pint.Quantity[np.float_], np.float_]
-    ) -> Dict[str, Any]:
+        self, **kwargs: pint.Quantity[np.float_] | np.float_
+    ) -> dict[str, Any]:
         """
         Generate model run inputs
         """
 
 
-class ModelRunner(Protocol):  # pylint: disable=too-few-public-methods
+class ModelRunner(Protocol):
     """
     Callable that supports running the model
     """
@@ -65,7 +62,7 @@ class ModelRunner(Protocol):  # pylint: disable=too-few-public-methods
 
 
 @define
-class OptModelRunner:  # pylint: disable=too-few-public-methods
+class OptModelRunner:
     """
     Model runner during optimisation
     """
@@ -100,7 +97,7 @@ class OptModelRunner:  # pylint: disable=too-few-public-methods
     @classmethod
     def from_parameters(
         cls,
-        params: Iterable[Tuple[str, Union[str, pint.Unit, None]]],
+        params: Iterable[tuple[str, str | pint.Unit | None]],
         do_model_runs_input_generator: ModelRunsInputGenerator,
         do_model_runs: ModelRunner,
     ) -> OptModelRunner:
@@ -139,7 +136,7 @@ class OptModelRunner:  # pylint: disable=too-few-public-methods
 
     def run_model(
         self,
-        x: nptype.NDArray[Union[np.float_, np.int_]],  # pylint: disable=invalid-name
+        x: NPArrayFloatOrInt,
     ) -> scmdata.run.BaseScmRun:
         """
         Run the model
@@ -163,10 +160,10 @@ class OptModelRunner:  # pylint: disable=too-few-public-methods
 
 
 def x_and_parameters_to_named_with_units(
-    x: nptype.NDArray[Union[np.float_, np.int_]],  # pylint: disable=invalid-name
-    params: Iterable[Tuple[str, Union[str, pint.Unit, None]]],
-    get_unit_registry: Optional[Callable[[], pint.UnitRegistry]] = None,
-) -> Dict[str, Union[pint.Quantity[np.float_], np.float_]]:
+    x: NPArrayFloatOrInt,
+    params: Iterable[tuple[str, str | pint.Unit | None]],
+    get_unit_registry: Callable[[], pint.UnitRegistry] | None = None,
+) -> dict[str, pint.Quantity[NPAnyFloat] | NPAnyFloat]:
     """
     Convert x array and parameters to a dictionary and add units
 

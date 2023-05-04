@@ -1,3 +1,6 @@
+"""
+Tests of :mod:`openscm_calibration.scipy_plotting`
+"""
 import logging
 import re
 from functools import partial
@@ -10,11 +13,13 @@ import pytest
 import scmdata.run
 import scmdata.testing
 
+from openscm_calibration.exceptions import MissingValueError
 from openscm_calibration.scipy_plotting import (
     DEFAULT_PLOT_TIMESERIES_BACKGROUND_TS_KWARGS,
     DEFAULT_PLOT_TIMESERIES_BEST_TS_KWARGS,
     DEFAULT_PLOT_TIMESERIES_TARGET_TS_KWARGS,
     CallbackProxy,
+    NoSuccessfulRunsError,
     OptPlotter,
     convert_target_to_model_output_units,
     get_optimisation_mosaic,
@@ -33,7 +38,7 @@ def dummy_init_kwargs():
     parameters = ("a", "A", "b")
     timeseries_axes = ("ts1", "ts2")
 
-    axes = {k: Mock() for k in [cost_key] + list(parameters) + list(timeseries_axes)}
+    axes = {k: Mock() for k in [cost_key, *list(parameters), *list(timeseries_axes)]}
     convert_scmrun_to_plot_dict = Mock(
         return_value={k: Mock() for k in timeseries_axes}
     )
@@ -67,11 +72,10 @@ def test_parameter_axis_missing(missing_paras, dummy_init_kwargs):
     }
 
     error_msg = re.escape(
-        "Error setting 'parameters'. "
-        f"The following keys are missing from ``self.axes``: ``{missing_paras}``. "
-        f"``self.axes.keys()`` is ``{dummy_init_kwargs['axes'].keys()}``."
+        f"``self.axes`` is missing values: ``{missing_paras}``. "
+        f"Available values: ``{list(dummy_init_kwargs['axes'].keys())}``"
     )
-    with pytest.raises(KeyError, match=error_msg):
+    with pytest.raises(MissingValueError, match=error_msg):
         OptPlotter(**dummy_init_kwargs)
 
 
@@ -82,11 +86,10 @@ def test_timeseries_axes_missing(missing_ts, dummy_init_kwargs):
     }
 
     error_msg = re.escape(
-        "Error setting 'timeseries_axes'. "
-        f"The following keys are missing from ``self.axes``: ``{missing_ts}``. "
-        f"``self.axes.keys()`` is ``{dummy_init_kwargs['axes'].keys()}``."
+        f"``self.axes`` is missing values: ``{missing_ts}``. "
+        f"Available values: ``{list(dummy_init_kwargs['axes'].keys())}``"
     )
-    with pytest.raises(KeyError, match=error_msg):
+    with pytest.raises(MissingValueError, match=error_msg):
         OptPlotter(**dummy_init_kwargs)
 
 
@@ -97,23 +100,21 @@ def test_timeseries_axes_convert_run_target_incompatible(dummy_init_kwargs):
     index = pd.MultiIndex.from_tuples(
         [(name, "K") for name in ts_axes[:-1]], names=("variable", "unit")
     )
-    df = pd.DataFrame(
+    target_ts = pd.DataFrame(
         np.random.random(size=(index.size, len(years))),
         columns=years,
         index=index,
     )
-    target = scmdata.run.BaseScmRun(df)
+    target = scmdata.run.BaseScmRun(target_ts)
 
     convert_scmrun_to_plot_dict = partial(scmrun_as_dict, groups=("variable",))
-    target_converted = convert_scmrun_to_plot_dict(target)
 
     dummy_init_kwargs["target"] = target
     dummy_init_kwargs["convert_scmrun_to_plot_dict"] = convert_scmrun_to_plot_dict
+
     error_msg = re.escape(
-        "Error setting 'timeseries_axes'. The following keys are missing when "
-        "``self.convert_scmrun_to_plot_dict`` is applied to "
-        f"``self.target``: ``{list(ts_axes[-1:])}``. "
-        f"``target_converted.keys()`` is ``{target_converted.keys()}``."
+        f"``self.axes`` is missing values: ``{list(ts_axes[-1:])}``. "
+        f"Available values: ``{list(dummy_init_kwargs['axes'].keys())}``"
     )
     with pytest.raises(ValueError, match=error_msg):
         OptPlotter(**dummy_init_kwargs)
@@ -305,7 +306,7 @@ def test_update_plots(
     )
     target = Mock()
 
-    axes = {k: Mock() for k in [cost_key] + parameters + timeseries_axes}
+    axes = {k: Mock() for k in [cost_key, *parameters, *timeseries_axes]}
 
     store = Mock()
     store.get_costs_labelled_xsamples_res.return_value = (
@@ -737,8 +738,7 @@ def test_get_runs_to_plot(
 
 
 def test_get_runs_to_plot_no_success():
-    error_msg = re.escape("No successful runs, please check")
-    with pytest.raises(ValueError, match=error_msg):
+    with pytest.raises(NoSuccessfulRunsError):
         get_runs_to_plot(
             [np.inf, np.inf],
             [None, None],
@@ -903,8 +903,7 @@ def test_no_progress_bar():
         Mock(),
     )
 
-    error_msg = re.escape("``self.progress_bar`` is not set")
-    with pytest.raises(ValueError, match=error_msg):
+    with pytest.raises(TypeError):
         proxy.update_progress_bar(3)
 
 

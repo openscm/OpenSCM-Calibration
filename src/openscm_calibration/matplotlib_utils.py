@@ -5,6 +5,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from openscm_calibration.exceptions import MissingRequiredDependencyError
+
 try:
     import matplotlib.pyplot as plt
 
@@ -21,18 +23,18 @@ except ImportError:  # pragma: no cover
 
 
 if TYPE_CHECKING:
-    from typing import Any, Dict, List, Tuple
+    from typing import Any
 
     import IPython
     import matplotlib
 
 
 def get_fig_axes_holder_from_mosaic(
-    mosaic: List[List[str]],
+    mosaic: list[list[str]],
     **kwargs: Any,
-) -> Tuple[
+) -> tuple[
     matplotlib.figure.Figure,
-    Dict[str, matplotlib.axes.Axes],
+    dict[str, matplotlib.axes.Axes],
     IPython.core.display_functions.DisplayHandle,
 ]:
     """
@@ -58,13 +60,13 @@ def get_fig_axes_holder_from_mosaic(
         ``matplotlib`` is not installed or ``IPython`` is not installed
     """
     if not HAS_MATPLOTLIB:
-        raise ImportError(
-            "``get_fig_axes_holder_from_mosaic`` requires matplotlib to be installed"
+        raise MissingRequiredDependencyError(
+            "get_fig_axes_holder_from_mosaic", requirement="matplotlib"
         )
 
     if not HAS_IPYTHON:
-        raise ImportError(
-            "``get_fig_axes_holder_from_mosaic`` requires IPython to be installed"
+        raise MissingRequiredDependencyError(
+            "get_fig_axes_holder_from_mosaic", requirement="IPython"
         )
 
     fig, axes = plt.subplot_mosaic(

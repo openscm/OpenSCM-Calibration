@@ -3,18 +3,26 @@ Storage class
 """
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Dict, MutableSequence, Protocol, Tuple, Union
+from collections.abc import MutableSequence
+from typing import TYPE_CHECKING, Any, Protocol
 
 import numpy as np
 from attrs import define, field
 
+from openscm_calibration.exceptions import (
+    MismatchLengthError,
+    NotExpectedAllSameValueError,
+    NotExpectedValueError,
+)
+
 if TYPE_CHECKING:
     import attr
-    import numpy.typing as nptype
     import scmdata.run
 
+    from openscm_calibration.type_hints import NPArrayFloatOrInt
 
-class SupportsListLikeHandling(Protocol):  # pylint: disable=too-few-public-methods
+
+class SupportsListLikeHandling(Protocol):
     """
     Class that supports handling a list-like
     """
@@ -26,7 +34,7 @@ class SupportsListLikeHandling(Protocol):  # pylint: disable=too-few-public-meth
 
 
 def _all_none_to_start(
-    instance: OptResStore,  # pylint: disable=unused-argument
+    instance: OptResStore,
     attribute: attr.Attribute[MutableSequence[Any]],
     value: MutableSequence[Any],
 ) -> None:
@@ -49,10 +57,9 @@ def _all_none_to_start(
     ValueError
         Not all elements in ``value`` are ``None``
     """
-    if not all(v is None for v in value):
-        raise ValueError(
-            f"All values in ``{attribute.name}`` should be ``None`` to start"
-        )
+    expected_val = None
+    if not all(v is expected_val for v in value):
+        raise NotExpectedAllSameValueError(attribute.name, expected_val=expected_val)
 
 
 def _same_length_as_res(
@@ -79,8 +86,15 @@ def _same_length_as_res(
     ValueError
         ``value`` does not have the same length as ``instance.res``
     """
-    if len(value) != len(instance.res):
-        raise ValueError(f"``{attribute.name}`` must be the same length as ``res``")
+    length_val = len(value)
+    length_res = len(instance.res)
+    if length_val != length_res:
+        raise MismatchLengthError(
+            attribute.name,
+            length=length_val,
+            expected_name="res",
+            expected_length=length_res,
+        )
 
 
 def _contains_indices_in_res(
@@ -109,8 +123,10 @@ def _contains_indices_in_res(
     """
     exp_indices = list(range(len(instance.res)))
     if list(sorted(value)) != exp_indices:
-        raise ValueError(
-            f"{attribute.name} must have indices: {exp_indices}, received: {value}"
+        raise NotExpectedValueError(
+            attribute.name,
+            val=value,
+            expected_val=exp_indices,
         )
 
 
@@ -120,22 +136,22 @@ class OptResStore:
     Store for results during optimisation
     """
 
-    res: MutableSequence[Union[None, scmdata.run.BaseScmRun]] = field(
+    res: MutableSequence[None | scmdata.run.BaseScmRun] = field(
         validator=[_all_none_to_start]
     )
     """Results of runs"""
 
-    costs: MutableSequence[Union[None, float]] = field(
+    costs: MutableSequence[None | float] = field(
         validator=[_all_none_to_start, _same_length_as_res]
     )
     """Costs of runs"""
 
-    x_samples: MutableSequence[
-        Union[None, nptype.NDArray[Union[np.float_, np.int_]]]
-    ] = field(validator=[_all_none_to_start, _same_length_as_res])
+    x_samples: MutableSequence[None | NPArrayFloatOrInt] = field(
+        validator=[_all_none_to_start, _same_length_as_res]
+    )
     """x vectors sampled"""
 
-    params: Tuple[str]
+    params: tuple[str]
     """Names of the parameters being stored in ``x_samples``"""
 
     available_indices: MutableSequence[int] = field(
@@ -147,7 +163,7 @@ class OptResStore:
     def from_n_runs(
         cls,
         n_runs: int,
-        params: Tuple[str],
+        params: tuple[str],
     ) -> OptResStore:
         """
         Initialise based on expected number of runs
@@ -179,7 +195,7 @@ class OptResStore:
         cls,
         n_runs: int,
         manager: SupportsListLikeHandling,
-        params: Tuple[str],
+        params: tuple[str],
     ) -> OptResStore:
         """
         Initialise based on expected number of runs for use in parallel work
@@ -218,13 +234,13 @@ class OptResStore:
         -------
             Available index. This index is now no longer considered available.
         """
-        return self.available_indices.pop()  # pylint:disable=no-member
+        return self.available_indices.pop()
 
     def set_result_cost_x(
         self,
-        res: Union[None, scmdata.run.BaseScmRun],
+        res: None | scmdata.run.BaseScmRun,
         cost: float,
-        x: nptype.NDArray[Union[np.float_, np.int_]],  # pylint: disable=invalid-name
+        x: NPArrayFloatOrInt,
         idx: int,
     ) -> None:
         """
@@ -244,21 +260,25 @@ class OptResStore:
         idx
             Index in ``self.costs``, ``self.x_samples`` and ``self.res`` to write into
         """
-        if len(x) != len(self.params):
-            raise ValueError(
-                f"Length of parameter vector ({len(x)}) does not match "
-                f"length of ``self.params`` ({len(self.params)})"
+        len_x = len(x)
+        len_params = len(self.params)
+        if len_x != len_params:
+            raise MismatchLengthError(
+                "x",
+                length=len_x,
+                expected_name="self.params",
+                expected_length=len_params,
             )
 
-        self.costs[idx] = cost  # pylint: disable=unsupported-assignment-operation
-        self.x_samples[idx] = x  # pylint: disable=unsupported-assignment-operation
-        self.res[idx] = res  # pylint: disable=unsupported-assignment-operation
+        self.costs[idx] = cost
+        self.x_samples[idx] = x
+        self.res[idx] = res
 
     def append_result_cost_x(
         self,
         res: scmdata.run.BaseScmRun,
         cost: float,
-        x: nptype.NDArray[Union[np.float_, np.int_]],  # pylint: disable=invalid-name
+        x: NPArrayFloatOrInt,
     ) -> None:
         """
         Append result, cost and x from a successful run to the results
@@ -288,7 +308,7 @@ class OptResStore:
     def note_failed_run(
         self,
         cost: float,
-        x: nptype.NDArray[Union[np.float_, np.int_]],  # pylint: disable=invalid-name
+        x: NPArrayFloatOrInt,
     ) -> None:
         """
         Note that a run failed
@@ -316,10 +336,10 @@ class OptResStore:
 
     def get_costs_xsamples_res(
         self,
-    ) -> Tuple[
-        Tuple[float, ...],
-        Tuple[nptype.NDArray[Union[np.float_, np.int_]], ...],
-        Tuple[scmdata.run.BaseScmRun, ...],
+    ) -> tuple[
+        tuple[float, ...],
+        tuple[NPArrayFloatOrInt, ...],
+        tuple[scmdata.run.BaseScmRun, ...],
     ]:
         """
         Get costs, x_samples and res from runs
@@ -330,16 +350,16 @@ class OptResStore:
             include failed runs here)
         """
         # There may be a better algorithm for this, PRs welcome :)
-        if all(x is None for x in self.x_samples):  # pylint: disable=not-an-iterable
+        if all(x is None for x in self.x_samples):
             return ((), (), ())
 
         tmp = tuple(
             zip(
                 *[
                     (
-                        self.costs[i],  # pylint: disable=unsubscriptable-object
+                        self.costs[i],
                         x,
-                        self.res[i],  # pylint: disable=unsubscriptable-object
+                        self.res[i],
                     )
                     for i, x in enumerate(self.x_samples)
                     # x is only None if no run was attempted yet
@@ -349,9 +369,9 @@ class OptResStore:
         )
 
         # Help out type hinting
-        costs: Tuple[float, ...] = tmp[0]
-        xs_out: Tuple[nptype.NDArray[Union[np.float_, np.int_]], ...] = tmp[1]
-        ress: Tuple[scmdata.run.BaseScmRun, ...] = tmp[2]
+        costs: tuple[float, ...] = tmp[0]
+        xs_out: tuple[NPArrayFloatOrInt, ...] = tmp[1]
+        ress: tuple[scmdata.run.BaseScmRun, ...] = tmp[2]
 
         out = (costs, xs_out, ress)
 
@@ -359,10 +379,10 @@ class OptResStore:
 
     def get_costs_labelled_xsamples_res(
         self,
-    ) -> Tuple[
-        Tuple[float, ...],
-        Dict[str, nptype.NDArray[Union[np.float_, np.int_]]],
-        Tuple[scmdata.run.BaseScmRun, ...],
+    ) -> tuple[
+        tuple[float, ...],
+        dict[str, NPArrayFloatOrInt],
+        tuple[scmdata.run.BaseScmRun, ...],
     ]:
         """
         Get costs, x_samples and res from runs

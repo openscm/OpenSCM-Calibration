@@ -49,6 +49,12 @@ openscm\_calibration.scipy\_plotting
 
    
    
+   .. rubric:: Exceptions
+
+   .. autosummary::
+   
+      NoSuccessfulRunsError
+   
    
 
 

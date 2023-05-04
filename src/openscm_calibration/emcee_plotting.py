@@ -3,21 +3,23 @@ Support for plotting emcee during run and afterwards
 """
 from __future__ import annotations
 
+from collections.abc import Sequence
 from typing import (
     TYPE_CHECKING,
     Any,
     Callable,
-    Dict,
-    List,
-    Optional,
-    Sequence,
-    Tuple,
-    Union,
 )
 
 import numpy as np
 
 from openscm_calibration.emcee_utils import get_labelled_chain_data
+from openscm_calibration.exceptions import MissingRequiredDependencyError
+
+if TYPE_CHECKING:
+    import emcee
+    import matplotlib
+
+    from openscm_calibration.type_hints import NPArrayFloatOrInt
 
 try:
     import corner
@@ -33,21 +35,15 @@ try:
 except ImportError:  # pragma: no cover
     HAS_SEABORN = False
 
-if TYPE_CHECKING:
-    import emcee
-    import matplotlib
-    import numpy.typing as nptype
 
-
-def plot_chains(  # pylint:disable=too-many-arguments
-    inp: Union[emcee.backends.Backend],
+def plot_chains(  # noqa: PLR0913
+    inp: emcee.backends.Backend,
     burnin: int,
-    parameter_order: List[str],
+    parameter_order: list[str],
     neg_log_likelihood_name: str,
-    axes_d: Dict[str, matplotlib.axes.Axes],
-    get_neg_log_likelihood_ylim: Optional[
-        Callable[[nptype.NDArray[Union[np.float_, np.int_]]], Tuple[float, float]]
-    ] = None,
+    axes_d: dict[str, matplotlib.axes.Axes],
+    get_neg_log_likelihood_ylim: Callable[[NPArrayFloatOrInt], tuple[float, float]]
+    | None = None,
     **kwargs: Any,
 ) -> None:
     """
@@ -95,7 +91,7 @@ def plot_chains(  # pylint:disable=too-many-arguments
         get_neg_log_likelihood_ylim = get_neg_log_likelihood_ylim_default
 
     for label, to_plot in labelled_data.items():
-        ax = axes_d[label]  # pylint:disable=invalid-name
+        ax = axes_d[label]
         plot_parameter_chains(
             ax,
             to_plot,
@@ -108,16 +104,16 @@ def plot_chains(  # pylint:disable=too-many-arguments
             ax.set_ylim(*get_neg_log_likelihood_ylim(to_plot))
 
 
-def plot_parameter_chains(  # pylint:disable=too-many-arguments
-    ax: matplotlib.Axes.axes,  # pylint:disable=invalid-name
-    chain_values: nptype.NDArray[Union[np.float_, np.int_]],
+def plot_parameter_chains(  # noqa: PLR0913
+    ax: matplotlib.Axes.axes,
+    chain_values: NPArrayFloatOrInt,
     burnin: int,
     alpha_chain: float = 0.3,
     linewidth: float = 0.5,
     color: str = "0.2",
     alpha_vspan: float = 0.3,
-    kwargs_chain: Optional[Dict[str, Any]] = None,
-    kwargs_vspan: Optional[Dict[str, Any]] = None,
+    kwargs_chain: dict[str, Any] | None = None,
+    kwargs_vspan: dict[str, Any] | None = None,
 ) -> matplotlib.Axes.axes:
     """
     Plot chains for a single parameter in an MCMC run
@@ -177,10 +173,10 @@ def plot_parameter_chains(  # pylint:disable=too-many-arguments
 
 
 def get_neg_log_likelihood_ylim_default(
-    neg_ll_values: nptype.NDArray[Union[np.float_, np.int_]],
+    neg_ll_values: NPArrayFloatOrInt,
     median_scaling: float = 1.5,
     max_scaling: float = 2.0,
-) -> Tuple[float, float]:
+) -> tuple[float, float]:
     r"""
     Get the y-limits for the negative log likelihood axes
 
@@ -238,12 +234,12 @@ def get_neg_log_likelihood_ylim_default(
     return (ymin, ymax)
 
 
-def plot_dist(  # pylint:disable=too-many-arguments
-    inp: Union[emcee.backends.Backend],
+def plot_dist(  # noqa: PLR0913
+    inp: emcee.backends.Backend,
     burnin: int,
     thin: int,
-    parameter_order: List[str],
-    axes_d: Dict[str, matplotlib.axes.Axes],
+    parameter_order: list[str],
+    axes_d: dict[str, matplotlib.axes.Axes],
     common_norm: bool = False,
     fill: bool = True,
     legend: bool = False,
@@ -290,7 +286,7 @@ def plot_dist(  # pylint:disable=too-many-arguments
         Passed to :func:`sns.kdeplot`.
     """
     if not HAS_SEABORN:
-        raise ImportError("``plot_dist`` requires seaborn to be installed")
+        raise MissingRequiredDependencyError("plot_dist", requirement="seaborn")
 
     burnt_in_samples_labelled = get_labelled_chain_data(
         inp,
@@ -300,7 +296,7 @@ def plot_dist(  # pylint:disable=too-many-arguments
     )
 
     for label, to_plot in burnt_in_samples_labelled.items():
-        ax = axes_d[label]  # pylint:disable=invalid-name
+        ax = axes_d[label]
 
         sns.kdeplot(
             data=to_plot,
@@ -313,7 +309,7 @@ def plot_dist(  # pylint:disable=too-many-arguments
         ax.set_xlabel(label)
 
 
-DEFAULT_PLOT_CORNER_TITLE_KWARGS: Dict[str, Any] = {"fontsize": 12}
+DEFAULT_PLOT_CORNER_TITLE_KWARGS: dict[str, Any] = {"fontsize": 12}
 """
 Default value for ``title_kwargs`` used by ``plot_corner``
 
@@ -322,7 +318,7 @@ starting point
 """
 
 
-DEFAULT_PLOT_CORNER_LABEL_KWARGS: Dict[str, Any] = {"fontsize": "x-small"}
+DEFAULT_PLOT_CORNER_LABEL_KWARGS: dict[str, Any] = {"fontsize": "x-small"}
 """
 Default value for ``label_kwargs`` used by ``plot_corner``
 
@@ -331,11 +327,11 @@ starting point
 """
 
 
-def plot_corner(  # pylint:disable=too-many-arguments,too-many-locals
-    inp: Union[emcee.backends.Backend],
+def plot_corner(  # noqa: PLR0913,too-many-locals
+    inp: emcee.backends.Backend,
     burnin: int,
     thin: int,
-    parameter_order: List[str],
+    parameter_order: list[str],
     fig: matplotlib.figure.Figure,
     bins: int = 30,
     plot_contours: bool = True,
@@ -343,9 +339,9 @@ def plot_corner(  # pylint:disable=too-many-arguments,too-many-locals
     quantiles: Sequence[float] = (0.05, 0.17, 0.5, 0.83, 0.95),
     show_titles: bool = True,
     title_quantiles: Sequence[float] = (0.05, 0.5, 0.95),
-    title_kwargs: Optional[Dict[str, Any]] = None,
+    title_kwargs: dict[str, Any] | None = None,
     title_fmt: str = ".3f",
-    label_kwargs: Optional[Dict[str, Any]] = None,
+    label_kwargs: dict[str, Any] | None = None,
     **kwargs: Any,
 ) -> None:
     """
@@ -414,7 +410,7 @@ def plot_corner(  # pylint:disable=too-many-arguments,too-many-locals
         Passed to :func:`corner.corner`
     """
     if not HAS_CORNER:
-        raise ImportError("``plot_corner`` requires corner to be installed")
+        raise MissingRequiredDependencyError("plot_corner", requirement="corner")
 
     if title_kwargs is None:
         title_kwargs = DEFAULT_PLOT_CORNER_TITLE_KWARGS

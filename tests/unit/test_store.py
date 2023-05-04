@@ -1,3 +1,6 @@
+"""
+Tests of :mod:`openscm_calibration.store`
+"""
 import copy
 import re
 from unittest.mock import MagicMock, Mock, PropertyMock, call, patch
@@ -108,8 +111,8 @@ def test_set_result_cost_x_raises(parameters, x):
     store = OptResStore.from_n_runs(3, params=parameters)
 
     error_msg = re.escape(
-        f"Length of parameter vector ({len(x)}) does not match "
-        f"length of ``self.params`` ({len(parameters)})"
+        f"``x`` has length {len(x)}, it should have length {len(parameters)}, "
+        "the same as ``self.params``"
     )
     with pytest.raises(ValueError, match=error_msg):
         store.set_result_cost_x(
@@ -412,7 +415,10 @@ def test_init_wrong_length(
     }
     inp[in_name] = inp[in_name][:-1]
 
-    error_msg = re.escape(f"``{in_name}`` must be the same length as ``res``")
+    error_msg = re.escape(
+        f"``{in_name}`` has length {len(inp[in_name])}, it should have length "
+        f"{len(dummy_res)}, the same as ``res``"
+    )
     with pytest.raises(ValueError, match=error_msg):
         OptResStore(
             res=dummy_res,
@@ -433,7 +439,7 @@ def test_init_not_none(
     }
     inp[in_name][1] = 3
 
-    error_msg = re.escape(f"All values in ``{in_name}`` should be ``None`` to start")
+    error_msg = re.escape(f"All values in ``{in_name}`` should be ``None``")
     with pytest.raises(ValueError, match=error_msg):
         OptResStore(
             available_indices=dummy_avail_indices,
@@ -462,7 +468,7 @@ def test_init_indices_wrong(
     dummy_avail_indices[-1] = len(dummy_avail_indices) + 1
 
     error_msg = re.escape(
-        f"available_indices must have indices: {list(range(len(dummy_res)))}, "
+        f"``available_indices`` must have value: {list(range(len(dummy_res)))}, "
         f"received: {dummy_avail_indices}"
     )
     with pytest.raises(ValueError, match=error_msg):

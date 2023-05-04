@@ -1,3 +1,6 @@
+"""
+Tests of :mod:`openscm_calibration.scmdata_utils`
+"""
 import pandas as pd
 import pytest
 import scmdata.testing
@@ -8,7 +11,7 @@ from openscm_calibration.scmdata_utils import scmrun_as_dict
 
 @pytest.fixture()
 def basic_scmrun():
-    df = pd.DataFrame(
+    timeseries = pd.DataFrame(
         [
             [
                 "a_model",
@@ -57,7 +60,7 @@ def basic_scmrun():
         ],
     )
 
-    return BaseScmRun(df)
+    return BaseScmRun(timeseries)
 
 
 @pytest.mark.parametrize(

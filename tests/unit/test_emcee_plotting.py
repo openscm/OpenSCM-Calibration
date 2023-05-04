@@ -1,3 +1,6 @@
+"""
+Tests of :mod:`openscm_calibration.emcee_plotting`
+"""
 import re
 from unittest.mock import Mock, patch
 
@@ -42,7 +45,7 @@ def test_plot_chains(
 ):
     inp = "passed_to_mock"
 
-    labels = parameter_order + [neg_log_likelihood_name]
+    labels = [*parameter_order, neg_log_likelihood_name]
     axes_d = {para: Mock() for para in labels}
     mock_get_labelled_chain_data.return_value = {
         para: i for i, para in enumerate(labels)

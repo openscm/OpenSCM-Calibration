@@ -10,10 +10,10 @@ import numpy as np
 if TYPE_CHECKING:
     # See here for explanation of this pattern and why we don't need quotes
     # below https://docs.python.org/3/library/typing.html#constant
+    from typing import Any
+
     import emcee.backends
     import numpy.typing as nptype
-
-    from openscm_calibration.type_hints import NPAnyFloat, NPArrayFloatOrInt
 
 
 def get_acceptance_fractions(
@@ -53,7 +53,7 @@ def get_autocorrelation_info(
     thin: int = 1,
     autocorr_tol: int = 0,
     convergence_ratio: float = 50,
-) -> dict[str, float | int | bool | nptype.NDArray[NPAnyFloat]]:
+) -> dict[str, float | int | bool | nptype.NDArray[np.floating[Any]]]:
     """
     Get info about autocorrelation in chains
 
@@ -114,7 +114,7 @@ def get_labelled_chain_data(
     neg_log_likelihood_name: str | None = None,
     burnin: int = 0,
     thin: int = 0,
-) -> dict[str, NPArrayFloatOrInt]:
+) -> dict[str, np.typing.NDArray[np.floating[Any] | np.integer[Any]]]:
     """
     Get labelled chain data
 
@@ -135,6 +135,11 @@ def get_labelled_chain_data(
 
     thin
         Thinning to use when sampling the chains
+
+    Returns
+    -------
+        Chain data, labelled with parameter names and, if requested,
+        ``neg_log_likelihood_name``
     """
     all_samples = inp.get_chain(discard=burnin, thin=thin)
 

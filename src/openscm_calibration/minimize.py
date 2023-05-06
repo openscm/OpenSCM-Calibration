@@ -11,7 +11,7 @@ import scmdata.run
 from openscm_calibration.store import OptResStore
 
 if TYPE_CHECKING:
-    from openscm_calibration.type_hints import NPArrayFloatOrInt
+    from typing import Any
 
 
 class SupportsCostCalculation(Protocol):
@@ -41,7 +41,7 @@ class SupportsModelRun(Protocol):
 
     def run_model(
         self,
-        x: NPArrayFloatOrInt,
+        x: np.typing.NDArray[np.number[Any]],
     ) -> scmdata.run.BaseScmRun:
         """
         Calculate cost function
@@ -58,7 +58,7 @@ class SupportsModelRun(Protocol):
 
 
 def to_minimize_full(
-    x: NPArrayFloatOrInt,
+    x: np.typing.NDArray[np.number[Any]],
     cost_calculator: SupportsCostCalculation,
     model_runner: SupportsModelRun,
     store: OptResStore | None = None,

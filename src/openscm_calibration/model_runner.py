@@ -20,8 +20,6 @@ if TYPE_CHECKING:
     import pint
     import scmdata.run
 
-    from openscm_calibration.type_hints import NPAnyFloat, NPArrayFloatOrInt
-
 
 class XToNamedPintConvertor(Protocol):
     """
@@ -30,7 +28,7 @@ class XToNamedPintConvertor(Protocol):
 
     def __call__(
         self,
-        x: NPArrayFloatOrInt,
+        x: np.typing.NDArray[np.number[Any]],
     ) -> dict[str, pint.Quantity[np.float_] | np.float_]:
         """
         Convert x to pint quantities
@@ -136,7 +134,7 @@ class OptModelRunner:
 
     def run_model(
         self,
-        x: NPArrayFloatOrInt,
+        x: np.typing.NDArray[np.number[Any]],
     ) -> scmdata.run.BaseScmRun:
         """
         Run the model
@@ -160,10 +158,10 @@ class OptModelRunner:
 
 
 def x_and_parameters_to_named_with_units(
-    x: NPArrayFloatOrInt,
+    x: np.typing.NDArray[np.number[Any]],
     params: Iterable[tuple[str, str | pint.Unit | None]],
     get_unit_registry: Callable[[], pint.UnitRegistry] | None = None,
-) -> dict[str, pint.Quantity[NPAnyFloat] | NPAnyFloat]:
+) -> dict[str, pint.Quantity[np.floating[Any]] | np.floating[Any]]:
     """
     Convert x array and parameters to a dictionary and add units
 

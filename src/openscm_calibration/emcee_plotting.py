@@ -19,8 +19,6 @@ if TYPE_CHECKING:
     import emcee
     import matplotlib
 
-    from openscm_calibration.type_hints import NPArrayFloatOrInt
-
 try:
     import corner
 
@@ -42,7 +40,9 @@ def plot_chains(  # noqa: PLR0913
     parameter_order: list[str],
     neg_log_likelihood_name: str,
     axes_d: dict[str, matplotlib.axes.Axes],
-    get_neg_log_likelihood_ylim: Callable[[NPArrayFloatOrInt], tuple[float, float]]
+    get_neg_log_likelihood_ylim: Callable[
+        [np.typing.NDArray[np.floating[Any] | np.integer[Any]]], tuple[float, float]
+    ]
     | None = None,
     **kwargs: Any,
 ) -> None:
@@ -106,7 +106,7 @@ def plot_chains(  # noqa: PLR0913
 
 def plot_parameter_chains(  # noqa: PLR0913
     ax: matplotlib.Axes.axes,
-    chain_values: NPArrayFloatOrInt,
+    chain_values: np.typing.NDArray[np.number[Any]],
     burnin: int,
     alpha_chain: float = 0.3,
     linewidth: float = 0.5,
@@ -173,7 +173,7 @@ def plot_parameter_chains(  # noqa: PLR0913
 
 
 def get_neg_log_likelihood_ylim_default(
-    neg_ll_values: NPArrayFloatOrInt,
+    neg_ll_values: np.typing.NDArray[np.floating[Any] | np.integer[Any]],
     median_scaling: float = 1.5,
     max_scaling: float = 2.0,
 ) -> tuple[float, float]:

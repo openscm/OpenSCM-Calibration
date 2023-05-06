@@ -19,8 +19,6 @@ if TYPE_CHECKING:
     import attr
     import scmdata.run
 
-    from openscm_calibration.type_hints import NPArrayFloatOrInt
-
 
 class SupportsListLikeHandling(Protocol):
     """
@@ -146,7 +144,7 @@ class OptResStore:
     )
     """Costs of runs"""
 
-    x_samples: MutableSequence[None | NPArrayFloatOrInt] = field(
+    x_samples: MutableSequence[None | np.typing.NDArray[np.number[Any]]] = field(
         validator=[_all_none_to_start, _same_length_as_res]
     )
     """x vectors sampled"""
@@ -240,7 +238,7 @@ class OptResStore:
         self,
         res: None | scmdata.run.BaseScmRun,
         cost: float,
-        x: NPArrayFloatOrInt,
+        x: np.typing.NDArray[np.number[Any]],
         idx: int,
     ) -> None:
         """
@@ -278,7 +276,7 @@ class OptResStore:
         self,
         res: scmdata.run.BaseScmRun,
         cost: float,
-        x: NPArrayFloatOrInt,
+        x: np.typing.NDArray[np.number[Any]],
     ) -> None:
         """
         Append result, cost and x from a successful run to the results
@@ -308,7 +306,7 @@ class OptResStore:
     def note_failed_run(
         self,
         cost: float,
-        x: NPArrayFloatOrInt,
+        x: np.typing.NDArray[np.number[Any]],
     ) -> None:
         """
         Note that a run failed
@@ -338,7 +336,7 @@ class OptResStore:
         self,
     ) -> tuple[
         tuple[float, ...],
-        tuple[NPArrayFloatOrInt, ...],
+        tuple[np.typing.NDArray[np.number[Any]], ...],
         tuple[scmdata.run.BaseScmRun, ...],
     ]:
         """
@@ -370,7 +368,7 @@ class OptResStore:
 
         # Help out type hinting
         costs: tuple[float, ...] = tmp[0]
-        xs_out: tuple[NPArrayFloatOrInt, ...] = tmp[1]
+        xs_out: tuple[np.typing.NDArray[np.number[Any]], ...] = tmp[1]
         ress: tuple[scmdata.run.BaseScmRun, ...] = tmp[2]
 
         out = (costs, xs_out, ress)
@@ -381,7 +379,7 @@ class OptResStore:
         self,
     ) -> tuple[
         tuple[float, ...],
-        dict[str, NPArrayFloatOrInt],
+        dict[str, np.typing.NDArray[np.number[Any]]],
         tuple[scmdata.run.BaseScmRun, ...],
     ]:
         """

@@ -29,7 +29,6 @@ if TYPE_CHECKING:
     import tqdm
 
     from openscm_calibration.store import OptResStore
-    from openscm_calibration.type_hints import NPArrayFloatOrInt
 
 
 logger: logging.Logger = logging.getLogger(__name__)
@@ -43,7 +42,7 @@ class SupportsScipyOptCallback(Protocol):
 
     def callback_minimize(
         self,
-        xk: NPArrayFloatOrInt,
+        xk: np.typing.NDArray[np.number[Any]],
     ) -> None:
         """
         Get cost of parameter vector
@@ -58,7 +57,7 @@ class SupportsScipyOptCallback(Protocol):
 
     def callback_differential_evolution(
         self,
-        xk: NPArrayFloatOrInt,
+        xk: np.typing.NDArray[np.number[Any]],
         convergence: float | None = None,
     ) -> None:
         """
@@ -290,7 +289,7 @@ class OptPlotter:
 
     def callback_minimize(
         self,
-        xk: NPArrayFloatOrInt,
+        xk: np.typing.NDArray[np.number[Any]],
     ) -> None:
         """
         Update the plots
@@ -307,7 +306,7 @@ class OptPlotter:
 
     def callback_differential_evolution(
         self,
-        xk: NPArrayFloatOrInt,
+        xk: np.typing.NDArray[np.number[Any]],
         convergence: float | None = None,
     ) -> None:
         """
@@ -607,7 +606,7 @@ def get_ymax_default(
 
 def plot_parameters(
     axes: dict[str, matplotlib.axes.Axes],
-    para_vals: dict[str, NPArrayFloatOrInt],
+    para_vals: dict[str, np.typing.NDArray[np.number[Any]]],
     alpha: float = 0.7,
     **kwargs: Any,
 ) -> None:
@@ -883,7 +882,7 @@ class CallbackProxy:
 
     def callback_minimize(
         self,
-        xk: NPArrayFloatOrInt,
+        xk: np.typing.NDArray[np.number[Any]],
     ) -> None:
         """
         Update the plots
@@ -901,7 +900,7 @@ class CallbackProxy:
 
     def callback_differential_evolution(
         self,
-        xk: NPArrayFloatOrInt,
+        xk: np.typing.NDArray[np.number[Any]],
         convergence: float | None = None,
     ) -> None:
         """

@@ -37,5 +37,4 @@
    openscm_calibration.scipy_plotting
    openscm_calibration.scmdata_utils
    openscm_calibration.store
-   openscm_calibration.type_hints
 

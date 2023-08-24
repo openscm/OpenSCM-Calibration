@@ -48,7 +48,7 @@ mypy = "^1.1.1"
 pytest-cov = "^4.0.0"
 commitizen = "^2.42.1"
 # Waiting on https://github.com/adamchainz/blacken-docs/issues/240
-blacken-docs = { git = "https://github.com/znicholls/blacken-docs.git", rev = "3e62e39" }
+blacken-docs = { git = "https://github.com/znicholls/blacken-docs.git", rev = "27c1f12" }
 tokenize-rt = "^5.0.0"
 ruff = "^0.0.264"
 

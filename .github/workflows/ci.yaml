@@ -53,7 +53,7 @@ jobs:
       - name: mypy
         run: poetry run mypy src
       - name: docs-linting
-        run: poetry run blacken-docs --check docs/source/notebooks/*.md
+        run: poetry run blacken-docs docs/source/notebooks/*.md
       - name: docs
         run: poetry run sphinx-build -W --keep-going -b html docs/source docs/build
 

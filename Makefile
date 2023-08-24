@@ -52,6 +52,7 @@ check-commit-messages:  ## check commit messages
 	poetry run cz check --rev-range c24e5e..HEAD
 
 virtual-environment:  ## update virtual environment, create a new one if it doesn't already exist
+	poetry lock --no-update
 	# Put virtual environments in the project
 	poetry config virtualenvs.in-project true
 	poetry install --all-extras

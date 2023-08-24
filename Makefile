@@ -24,7 +24,7 @@ checks:  ## run all the linting checks of the codebase
 	@echo "=== black ==="; poetry run black --check src tests docs/source/conf.py scripts || echo "--- black failed ---" >&2; \
 		echo "=== ruff ==="; poetry run ruff check src tests scripts || echo "--- ruff failed ---" >&2; \
 		echo "=== mypy ==="; poetry run mypy src || echo "--- mypy failed ---" >&2; \
-		echo "=== black docs ==="; poetry run blacken-docs --check docs/source/notebooks/*.md || echo "--- black docs failed ---" >&2; \
+		echo "=== black docs ==="; poetry run blacken-docs docs/source/notebooks/*.md || echo "--- black docs failed ---" >&2; \
 		echo "======"
 
 .PHONY: black

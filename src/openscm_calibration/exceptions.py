@@ -149,9 +149,9 @@ class AlignmentError(ValueError):
     def __init__(  # noqa: PLR0913
         self,
         name_left: str,
-        val_left: pd.DataFrame | pd.Series,
+        val_left: pd.DataFrame | pd.Series[Any],
         name_right: str,
-        val_right: pd.DataFrame | pd.Series,
+        val_right: pd.DataFrame | pd.Series[Any],
         extra_context: str | None = None,
     ) -> None:
         """

@@ -33,7 +33,7 @@ from openscm_calibration.emcee_plotting import (
 @patch("openscm_calibration.emcee_plotting.plot_parameter_chains")
 @patch("openscm_calibration.emcee_plotting.get_labelled_chain_data")
 @patch("openscm_calibration.emcee_plotting.get_neg_log_likelihood_ylim_default")
-def test_plot_chains(
+def test_plot_chains(  # noqa: PLR0913
     mock_get_neg_log_likelihood_ylim_default,
     mock_get_labelled_chain_data,
     mock_plot_parameter_chains,
@@ -142,7 +142,7 @@ def test_plot_chains(
     ),
 )
 @pytest.mark.parametrize("burnin", (3, 5))
-def test_plot_parameter_chains(
+def test_plot_parameter_chains(  # noqa: PLR0913
     alpha_chain,
     alpha_chain_exp,
     linewidth,
@@ -244,7 +244,7 @@ def test_plot_parameter_chains(
         ),
     ),
 )
-def test_get_neg_log_likelihood_ylim_default(
+def test_get_neg_log_likelihood_ylim_default(  # noqa: PLR0913
     inp, median_scaling, median_scaling_exp, max_scaling, max_scaling_exp, exp
 ):
     call_kwargs = {}
@@ -292,7 +292,7 @@ def test_no_seaborn():
 )
 @patch("openscm_calibration.emcee_plotting.sns")
 @patch("openscm_calibration.emcee_plotting.get_labelled_chain_data")
-def test_plot_dist(
+def test_plot_dist(  # noqa: PLR0913
     mock_get_labelled_chain_data,
     mock_sns,
     parameter_order,
@@ -389,7 +389,14 @@ def test_no_corner():
     ((None, True, [0.25, 0.75], [0.25, 0.75]), (False, False, None, (0.05, 0.5, 0.95))),
 )
 @pytest.mark.parametrize(
-    "title_kwargs, title_kwargs_exp, title_fmt, title_fmt_exp, label_kwargs, label_kwargs_exp",
+    [
+        "title_kwargs",
+        "title_kwargs_exp",
+        "title_fmt",
+        "title_fmt_exp",
+        "label_kwargs",
+        "label_kwargs_exp",
+    ],
     (
         (None, {"fontsize": 12}, ".2d", ".2d", None, {"fontsize": "x-small"}),
         (
@@ -410,7 +417,7 @@ def test_no_corner():
     ),
 )
 @patch("openscm_calibration.emcee_plotting.corner")
-def test_plot_corner(
+def test_plot_corner(  # noqa: PLR0913
     mock_corner,
     burnin,
     thin,

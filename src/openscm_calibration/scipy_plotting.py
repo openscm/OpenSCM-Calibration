@@ -283,9 +283,9 @@ class OptPlotter:
 
     get_timeseries: Callable[[scmdata.run.BaseScmRun], pd.DataFrame] | None = None
     """
-    Function which converts :obj:`scmdata.run.BaseScmRun` into a :obj:`pd.DataFrame` for plotting
+    Function which converts [scmdata.run.BaseScmRun][] into a [pd.DataFrame][]
 
-    If not provided, :func:`get_timeseries_default` is used
+    If not provided, [get_timeseries_default][] is used
     """
 
     def callback_minimize(
@@ -762,10 +762,10 @@ def plot_timeseries(  # noqa: PLR0913,too-many-locals
         ax = axes[k]
         best_k = best_run_d[k]
         background_runs = others_to_plot_d[k]
-        model_unit = background_runs.get_unique_meta("unit", True)
+        model_unit = str(background_runs.get_unique_meta("unit", True))
 
         target_k = target_runs[k]
-        target_k_unit = target_k.get_unique_meta("unit", True)
+        target_k_unit = str(target_k.get_unique_meta("unit", True))
         if target_k_unit != model_unit:
             # Avoidable user side, hence warn (see
             # https://docs.python.org/3/howto/logging.html#when-to-use-logging)
@@ -878,7 +878,7 @@ class CallbackProxy:
     update_every: int = 50
     """Update the plots every X calls to the model"""
 
-    progress_bar: tqdm.std.tqdm | None = None
+    progress_bar: tqdm.std.tqdm[Any] | None = None
     """Progress bar to track iterations"""
 
     def callback_minimize(
@@ -996,7 +996,7 @@ def convert_target_to_model_output_units(
 
     tmp = []
     for group, run in target_d.items():
-        model_unit = model_output_d[group].get_unique_meta("unit", True)
+        model_unit = str(model_output_d[group].get_unique_meta("unit", True))
         run_converted = run.convert_unit(model_unit)
 
         tmp.append(run_converted)

@@ -19,6 +19,7 @@ from openscm_calibration.exceptions import MissingRequiredDependencyError
 if TYPE_CHECKING:
     import emcee
     import matplotlib
+    import matplotlib.axes
 
 try:
     import corner
@@ -106,7 +107,7 @@ def plot_chains(  # noqa: PLR0913
 
 
 def plot_parameter_chains(  # noqa: PLR0913
-    ax: matplotlib.Axes.axes,
+    ax: matplotlib.axes.Axes,
     chain_values: np.typing.NDArray[np.number[Any]],
     burnin: int,
     alpha_chain: float = 0.3,
@@ -115,7 +116,7 @@ def plot_parameter_chains(  # noqa: PLR0913
     alpha_vspan: float = 0.3,
     kwargs_chain: dict[str, Any] | None = None,
     kwargs_vspan: dict[str, Any] | None = None,
-) -> matplotlib.Axes.axes:
+) -> matplotlib.axes.Axes:
     """
     Plot chains for a single parameter in an MCMC run
 
@@ -208,7 +209,7 @@ def get_neg_log_likelihood_ylim_default(
         \text{max_scaled} = \text{max_scaling} \times \max(\text{neg_ll_values}) \\
         \text{ymin} = \min(0, \text{median_scaled}, \text{max_scaled}) \\
         \text{ymax} = \max(0, \text{median_scaled}, \text{max_scaled})
-    """
+    """  # noqa: E501
     median_scaled = float(median_scaling * np.median(neg_ll_values))
     if not np.isfinite(median_scaled):
         median_scaled = 0.0

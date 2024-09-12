@@ -26,7 +26,7 @@ def _works_with_self_target(
         instance.calculate_cost(instance.target)
     except KeyError as exc:
         value_aligned, target_ts_aligned = value.timeseries().align(
-            instance.target.timeseries(), axis="rows"
+            instance.target.timeseries(), axis="index"
         )
         raise AlignmentError(
             name_left="self.target",
@@ -107,19 +107,19 @@ class OptCostCalculatorSSE:
         """
         norm = target.timeseries()
         norm.loc[:, :] = 1
-        norm = type(target)(norm)
+        norm_cast = type(target)(norm)
 
-        return cls(target=target, normalisation=norm, model_col=model_col)
+        return cls(target=target, normalisation=norm_cast, model_col=model_col)
 
     @classmethod
     def from_series_normalisation(
         cls,
         target: scmdata.run.BaseScmRun,
         model_col: str,
-        normalisation_series: pd.Series,
+        normalisation_series: pd.Series[float],
     ) -> OptCostCalculatorSSE:
         """
-        Initialise starting from a series that defines normalisation for each timeseries.
+        Initialise from a series that defines normalisation for each timeseries.
 
         The series is broadcast to match the timeseries in target, using the
         same value for all timepoints in each timeseries.
@@ -155,7 +155,7 @@ class OptCostCalculatorSSE:
         # align and then broadcast
         norm_series_aligned, _ = normalisation_series.align(target_ts_no_unit)
 
-        if norm_series_aligned.isna().any().any():
+        if norm_series_aligned.isna().any():
             raise AlignmentError(
                 name_left="target_ts_no_unit",
                 val_left=target_ts_no_unit,
@@ -164,7 +164,7 @@ class OptCostCalculatorSSE:
                 extra_context="Even after aligning, there are still nan values",
             )
 
-        if norm_series_aligned.shape[0] != target_ts_no_unit.shape[0]:
+        if norm_series_aligned.size != target_ts_no_unit.shape[0]:
             raise AlignmentError(
                 name_left="target_ts_no_unit",
                 val_left=target_ts_no_unit,
@@ -177,7 +177,7 @@ class OptCostCalculatorSSE:
             )
 
         norm_series_aligned = type(target_ts_no_unit)(
-            np.broadcast_to(norm_series_aligned.values, target_ts_no_unit.T.shape).T,
+            np.broadcast_to(norm_series_aligned.values, target_ts_no_unit.T.shape).T,  # type: ignore # mypy/np confused
             index=norm_series_aligned.index,
             columns=target_ts_no_unit.columns,
         )
@@ -199,7 +199,7 @@ class OptCostCalculatorSSE:
         -------
             Cost
         """
-        diff = model_results.subtract(
+        diff = model_results.subtract(  # type: ignore # error in scmdata types
             self.target, op_cols={self.model_col: "res - target"}
         ).divide(
             self.normalisation,

@@ -77,7 +77,7 @@ def test_get_acceptance_fractions(inp, exp):
         (None, 50),
     ),
 )
-def test_get_autocorrelation_info(
+def test_get_autocorrelation_info(  # noqa: PLR0913
     burnin,
     thin_inp,
     thin_exp,
@@ -133,7 +133,7 @@ def test_get_autocorrelation_info(
 @pytest.mark.parametrize(
     "burnin, burnin_exp, thin, thin_exp", ((None, 0, None, 0), (100, 100, 20, 20))
 )
-def test_get_labelled_chain_data(
+def test_get_labelled_chain_data(  # noqa: PLR0913
     parameter_order, neg_log_likelihood_name, burnin, burnin_exp, thin, thin_exp
 ):
     inp = Mock()

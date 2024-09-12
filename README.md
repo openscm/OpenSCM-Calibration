@@ -45,7 +45,7 @@ Some suggested options:
   and we won't reply to any issues
 -->
 
-- prototype: the project is just starting up and the code is all prototype
+- development: the project is actively being worked on
 
 <!--- --8<-- [end:description] -->
 

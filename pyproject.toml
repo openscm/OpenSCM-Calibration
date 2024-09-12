@@ -1,6 +1,6 @@
 [project]
 name = "openscm-calibration"
-version = "0.1.0a1"
+version = "0.5.1a1"
 description = "Calibration tools for simple climate models (with potential for applications elsewhere)"
 authors = [
     { name = "Zebedee Nicholls", email = "zebedee.nicholls@climate-energy-college.org" },
@@ -8,6 +8,8 @@ authors = [
 requires-python = ">=3.9"
 dependencies = [
     "pandas",
+    "attrs",
+    "pint",
 ]
 readme = "README.md"
 
@@ -28,10 +30,24 @@ build-backend = "pdm.backend"
 [project.optional-dependencies]
 plots = [
     "matplotlib>=3.7.1",
+    "corner~=2.0",
+    "seaborn~=0.13",
 ]
 notebooks = [
     "jupyterlab>=4.2.0",
     "jupytext>=1.16.3",
+    "emcwrap~=0.2",
+    "multiprocess~=0.70",
+    "scmdata~=0.17",
+    "openscm-units~=0.6",
+    "tqdm~=4.66",
+    "h5py~=3.11",
+    "ipywidgets~=8.1",
+    "more-itertools~=10.5",
+]
+tests = [
+    "emcee~=3.1",
+    "multiprocess~=0.70",
 ]
 
 [tool.pdm.dev-dependencies]

@@ -33,7 +33,7 @@ ruff-fixes:  ## fix the code using ruff
     # format before and after checking so that the formatted stuff is checked and
     # the fixed stuff is formatted
 	pdm run ruff format src tests scripts docs
-	pdm run ruff src tests scripts docs
+	pdm run ruff check src tests scripts docs --fix
 	pdm run ruff format src tests scripts docs
 
 

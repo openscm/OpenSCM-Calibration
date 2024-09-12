@@ -1,6 +1,7 @@
 """
 Support for plotting emcee during run and afterwards
 """
+
 from __future__ import annotations
 
 from collections.abc import Sequence

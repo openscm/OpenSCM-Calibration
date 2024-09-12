@@ -1,6 +1,7 @@
 """
 Tests of :mod:`openscm_calibration.cost`
 """
+
 import re
 
 import numpy as np

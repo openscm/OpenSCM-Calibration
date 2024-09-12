@@ -1,6 +1,7 @@
 """
 Tests of :mod:`openscm_calibration.model_runner`
 """
+
 import re
 from functools import partial
 from unittest.mock import Mock, patch

@@ -1,6 +1,7 @@
 """
 Tests of :mod:`openscm_calibration.matplotlib_utils`
 """
+
 import re
 from unittest.mock import Mock, patch
 

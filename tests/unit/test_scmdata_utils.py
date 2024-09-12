@@ -1,6 +1,7 @@
 """
 Tests of :mod:`openscm_calibration.scmdata_utils`
 """
+
 import pandas as pd
 import pytest
 import scmdata.testing

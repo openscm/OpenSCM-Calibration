@@ -1,6 +1,7 @@
 """
 Integration tests of :mod:`openscm_calibration.scipy_plotting`
 """
+
 import numpy as np
 import pandas as pd
 import pandas.testing as pdt

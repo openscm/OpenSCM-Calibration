@@ -1,6 +1,7 @@
 """
 Calculate cost of model results
 """
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
@@ -205,6 +206,6 @@ class OptCostCalculatorSSE:
             op_cols={self.model_col: "(res - target) / normalisation"},
         )
 
-        cost = float((diff.convert_unit("1") ** 2).values.sum().sum())  # noqa: PD011
+        cost = float((diff.convert_unit("1") ** 2).values.sum().sum())
 
         return cost

@@ -1,6 +1,7 @@
 """
 Tests of :mod:`openscm_calibration.minimize`
 """
+
 import inspect
 from unittest.mock import Mock
 

@@ -1,6 +1,7 @@
 """
 Tests of :mod:`openscm_calibration.emcee_plotting`
 """
+
 import re
 from unittest.mock import Mock, patch
 

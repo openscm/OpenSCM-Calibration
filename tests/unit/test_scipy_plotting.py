@@ -1,6 +1,7 @@
 """
 Tests of :mod:`openscm_calibration.scipy_plotting`
 """
+
 import logging
 import re
 from functools import partial

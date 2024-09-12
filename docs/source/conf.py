@@ -13,7 +13,7 @@ author = authors
 # add a copyright year variable, we can extend this over time in future as
 # needed
 copyright_year = "2023"
-copyright = "{}, {}".format(copyright_year, authors)
+copyright = f"{copyright_year}, {authors}"
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration

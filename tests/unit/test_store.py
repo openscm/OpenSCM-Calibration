@@ -1,6 +1,7 @@
 """
 Tests of :mod:`openscm_calibration.store`
 """
+
 import copy
 import re
 from unittest.mock import MagicMock, Mock, PropertyMock, call, patch

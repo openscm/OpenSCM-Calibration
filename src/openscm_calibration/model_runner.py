@@ -1,6 +1,7 @@
 """
 Model runner class
 """
+
 from __future__ import annotations
 
 from collections.abc import Iterable
@@ -29,7 +30,7 @@ class XToNamedPintConvertor(Protocol):
     def __call__(
         self,
         x: np.typing.NDArray[np.number[Any]],
-    ) -> dict[str, pint.Quantity[np.float_] | np.float_]:
+    ) -> dict[str, pint.Quantity[np.float64] | np.float64]:
         """
         Convert x to pint quantities
         """
@@ -41,7 +42,7 @@ class ModelRunsInputGenerator(Protocol):
     """
 
     def __call__(
-        self, **kwargs: pint.Quantity[np.float_] | np.float_
+        self, **kwargs: pint.Quantity[np.float64] | np.float64
     ) -> dict[str, Any]:
         """
         Generate model run inputs

@@ -1,6 +1,7 @@
 """
 Exceptions that are used throughout
 """
+
 from __future__ import annotations
 
 from collections.abc import Sequence

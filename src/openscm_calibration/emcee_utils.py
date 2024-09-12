@@ -1,6 +1,7 @@
 """
 Helpers for emcee
 """
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
@@ -17,8 +18,8 @@ if TYPE_CHECKING:
 
 
 def get_acceptance_fractions(
-    chains: nptype.NDArray[np.float_],
-) -> nptype.NDArray[np.float_]:
+    chains: nptype.NDArray[np.float64],
+) -> nptype.NDArray[np.float64]:
     """
     Get acceptance fraction in each chain of an MCMC ensemble of chains
 
@@ -42,7 +43,7 @@ def get_acceptance_fractions(
         np.any(np.diff(chains, axis=0), axis=2), axis=0
     )
     n_proposals = chains.shape[0] - 1  # first step isn't a proposal
-    acceptance_fractions = accepted / np.float_(n_proposals)
+    acceptance_fractions = accepted / np.float64(n_proposals)
 
     return acceptance_fractions
 

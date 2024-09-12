@@ -18,6 +18,8 @@ dependencies = [
     "seaborn~=0.13",
     # TODO: remove when addressing #26 ?
     "corner~=2.0",
+    # TODO: remove when addressing #26 ?
+    "ipython",
 ]
 readme = "README.md"
 

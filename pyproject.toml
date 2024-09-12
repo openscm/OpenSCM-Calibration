@@ -10,6 +10,8 @@ dependencies = [
     "pandas",
     "attrs",
     "pint",
+    # TODO: remove when addressing #26
+    "scmdata~=0.17",
 ]
 readme = "README.md"
 
@@ -31,7 +33,6 @@ notebooks = [
     "jupytext>=1.16.3",
     "emcwrap~=0.2",
     "multiprocess~=0.70",
-    "scmdata~=0.17",
     "openscm-units~=0.6",
     "tqdm~=4.66",
     "h5py~=3.11",

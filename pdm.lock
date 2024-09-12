@@ -5,7 +5,7 @@
 groups = ["default", "dev", "docs", "notebooks", "plots", "test", "tests"]
 strategy = ["inherit_metadata"]
 lock_version = "4.5.0"
-content_hash = "sha256:94d11b92026d328e5e518565670edb9e6f639ba1796f7dd2c6b14113fe5b953e"
+content_hash = "sha256:66235f5089baed3b63bf909cdcb9800d0dab7c498359d218c6e870a6e07008fa"
 
 [[metadata.targets]]
 requires_python = ">=3.9"
@@ -285,7 +285,7 @@ name = "cftime"
 version = "1.6.4"
 requires_python = ">=3.8"
 summary = "Time-handling functionality from netcdf4-python"
-groups = ["notebooks"]
+groups = ["default"]
 dependencies = [
     "numpy>1.13.3; python_version < \"3.12.0.rc1\"",
     "numpy>=1.26.0b1; python_version >= \"3.12.0.rc1\"",
@@ -409,7 +409,7 @@ name = "colorama"
 version = "0.4.6"
 requires_python = "!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,!=3.4.*,!=3.5.*,!=3.6.*,>=2.7"
 summary = "Cross-platform colored terminal text."
-groups = ["dev", "docs", "notebooks", "test"]
+groups = ["default", "dev", "docs", "notebooks", "test"]
 files = [
     {file = "colorama-0.4.6-py2.py3-none-any.whl", hash = "sha256:4f1d9991f5acc0ca119f9d443620b77f9d6b33703e51011c16baf57afb285fc6"},
     {file = "colorama-0.4.6.tar.gz", hash = "sha256:08695f5cb7ed6e0531a20572697297273c47b8cae5a63ffc6d6ed5c201be6e44"},
@@ -941,7 +941,7 @@ files = [
 name = "globalwarmingpotentials"
 version = "0.11.1"
 summary = "Global warming potentials of greenhouse gases from various IPCC reports"
-groups = ["notebooks"]
+groups = ["default", "notebooks"]
 files = [
     {file = "globalwarmingpotentials-0.11.1-py2.py3-none-any.whl", hash = "sha256:0f208afdaea1e464b1d2f760f06ab09e3870876c48a322252536809a5087ed11"},
     {file = "globalwarmingpotentials-0.11.1.tar.gz", hash = "sha256:c0d98d6fe7fb7d21bc2c17d7b41dfdf5a08b3a80778943e1f0d2f7f29372038b"},
@@ -949,7 +949,7 @@ files = [
 
 [[package]]
 name = "griffe"
-version = "1.3.0"
+version = "1.3.1"
 requires_python = ">=3.8"
 summary = "Signatures for entire Python programs. Extract the structure, the frame, the skeleton of your project, to generate API documentation or find breaking changes in your API."
 groups = ["docs"]
@@ -958,8 +958,8 @@ dependencies = [
     "colorama>=0.4",
 ]
 files = [
-    {file = "griffe-1.3.0-py3-none-any.whl", hash = "sha256:3c85b5704136379bed767ef9c1d7776cac50886e341b61b71c6983dfe04d7cb2"},
-    {file = "griffe-1.3.0.tar.gz", hash = "sha256:878cd99709b833fab7c41a6545188bcdbc1fcb3b441374449d34b69cb864de69"},
+    {file = "griffe-1.3.1-py3-none-any.whl", hash = "sha256:940aeb630bc3054b4369567f150b6365be6f11eef46b0ed8623aea96e6d17b19"},
+    {file = "griffe-1.3.1.tar.gz", hash = "sha256:3f86a716b631a4c0f96a43cb75d05d3c85975003c20540426c0eba3b0581c56a"},
 ]
 
 [[package]]
@@ -2264,7 +2264,7 @@ name = "openscm-units"
 version = "0.6.1"
 requires_python = "<4.0,>=3.9"
 summary = "Handling of units related to simple climate modelling."
-groups = ["notebooks"]
+groups = ["default", "notebooks"]
 dependencies = [
     "globalwarmingpotentials",
     "pandas",
@@ -2294,7 +2294,7 @@ name = "packaging"
 version = "24.1"
 requires_python = ">=3.8"
 summary = "Core utilities for Python packages"
-groups = ["dev", "docs", "notebooks", "plots", "test"]
+groups = ["default", "dev", "docs", "notebooks", "plots", "test"]
 files = [
     {file = "packaging-24.1-py3-none-any.whl", hash = "sha256:5b8f2217dbdbd2f7f384c41c628544e6d52f2d0f53c6d0c3ea61aa5d1d7ff124"},
     {file = "packaging-24.1.tar.gz", hash = "sha256:026ed72c8ed3fcce5bf8950572258698927fd1dbda10a5e981cdf0ac37f4f002"},
@@ -2519,7 +2519,7 @@ name = "pint-pandas"
 version = "0.6.2"
 requires_python = ">=3.9"
 summary = "Extend Pandas Dataframe with Physical quantities module"
-groups = ["notebooks"]
+groups = ["default"]
 dependencies = [
     "pandas>=2.2",
     "pint>=0.24",
@@ -3240,7 +3240,7 @@ name = "scmdata"
 version = "0.17.0"
 requires_python = ">=3.9,<4.0"
 summary = "scmdata provides some useful data handling routines for dealing with data related to simple climate models (SCMs aka reduced complexity climate models, RCMs)"
-groups = ["notebooks"]
+groups = ["default"]
 dependencies = [
     "cftime>=1.5",
     "numpy",
@@ -3453,7 +3453,7 @@ name = "tqdm"
 version = "4.66.5"
 requires_python = ">=3.7"
 summary = "Fast, Extensible Progress Meter"
-groups = ["notebooks"]
+groups = ["default", "notebooks"]
 dependencies = [
     "colorama; platform_system == \"Windows\"",
 ]
@@ -3683,7 +3683,7 @@ name = "xarray"
 version = "2024.7.0"
 requires_python = ">=3.9"
 summary = "N-D labeled arrays and datasets in Python"
-groups = ["notebooks"]
+groups = ["default"]
 dependencies = [
     "numpy>=1.23",
     "packaging>=23.1",

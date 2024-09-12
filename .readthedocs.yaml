@@ -13,12 +13,12 @@ build:
   tools:
     python: "3.11"
   jobs:
-    post_create_environment:
-      - pip install poetry
-      - poetry config virtualenvs.create false
     post_install:
-      - poetry install --with docs --all-extras
+      # RtD seems to be not happy with pdm installs,
+      # hence use pip directly instead.
+      - python -m pip install -r requirements-docs.txt
+      - python -m pip list
 
-# Build documentation in the docs/ directory with Sphinx
-sphinx:
-   configuration: docs/source/conf.py
+mkdocs:
+  configuration: mkdocs.yml
+  fail_on_warning: true

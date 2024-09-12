@@ -1,7 +1,9 @@
 # Makefile to help automate key steps
 
 .DEFAULT_GOAL := help
-
+# Will likely fail on Windows, but Makefiles are in general not Windows
+# compatible so we're not too worried
+TEMP_FILE := $(shell mktemp)
 
 # A helper script to get short descriptions of each target in the Makefile
 define PRINT_HELP_PYSCRIPT
@@ -16,44 +18,68 @@ endef
 export PRINT_HELP_PYSCRIPT
 
 
+.PHONY: help
 help:  ## print short description of each target
 	@python3 -c "$$PRINT_HELP_PYSCRIPT" < $(MAKEFILE_LIST)
 
 .PHONY: checks
 checks:  ## run all the linting checks of the codebase
-	@echo "=== black ==="; poetry run black --check src tests docs/source/conf.py scripts || echo "--- black failed ---" >&2; \
-		echo "=== ruff ==="; poetry run ruff check src tests scripts || echo "--- ruff failed ---" >&2; \
-		echo "=== mypy ==="; poetry run mypy src || echo "--- mypy failed ---" >&2; \
-		echo "=== black docs ==="; poetry run blacken-docs docs/source/notebooks/*.md || echo "--- black docs failed ---" >&2; \
+	@echo "=== pre-commit ==="; pdm run pre-commit run --all-files || echo "--- pre-commit failed ---" >&2; \
+		echo "=== mypy ==="; MYPYPATH=stubs pdm run mypy src || echo "--- mypy failed ---" >&2; \
 		echo "======"
-
-.PHONY: black
-black:  ## format the code using black
-	poetry run black src tests docs/source/conf.py scripts
 
 .PHONY: ruff-fixes
 ruff-fixes:  ## fix the code using ruff
-	poetry run ruff src tests scripts --fix
+    # format before and after checking so that the formatted stuff is checked and
+    # the fixed stuff is formatted
+	pdm run ruff format src tests scripts docs
+	pdm run ruff src tests scripts docs
+	pdm run ruff format src tests scripts docs
+
 
 .PHONY: test
 test:  ## run the tests
-	poetry run pytest -r a --doctest-modules --cov
+	pdm run pytest src tests -r a -v --doctest-modules --cov=src
+
+# Note on code coverage and testing:
+# You must specify cov=src.
+# Otherwise, funny things happen when doctests are involved.
+# If you want to debug what is going on with coverage,
+# we have found that adding COVERAGE_DEBUG=trace
+# to the front of the below command
+# can be very helpful as it shows you
+# if coverage is tracking the coverage
+# of all of the expected files or not.
+# We are sure that the coverage maintainers would appreciate a PR
+# that improves the coverage handling when there are doctests
+# and a `src` layout like ours.
 
 .PHONY: docs
 docs:  ## build the docs
-	poetry run sphinx-build -b html docs/source docs/build/html
+	pdm run mkdocs build
 
-.PHONY: black-docs
-black-docs:  ## format the notebok examples using black
-	poetry run blacken-docs docs/source/notebooks/*.md
+.PHONY: docs-strict
+docs-strict:  ## build the docs strictly (e.g. raise an error on warnings, this most closely mirrors what we do in the CI)
+	pdm run mkdocs build --strict
 
-.PHONY: check-commit-messages
-check-commit-messages:  ## check commit messages
-	poetry run cz check --rev-range c24e5e..HEAD
+.PHONY: docs-serve
+docs-serve:  ## serve the docs locally
+	pdm run mkdocs serve
 
+.PHONY: changelog-draft
+changelog-draft:  ## compile a draft of the next changelog
+	pdm run towncrier build --draft --version draft
+
+.PHONY: licence-check
+licence-check:  ## Check that licences of the dependencies are suitable
+	# Will likely fail on Windows, but Makefiles are in general not Windows
+	# compatible so we're not too worried
+	pdm export --without=tests --without=docs --without=dev > $(TEMP_FILE)
+	pdm run liccheck -r $(TEMP_FILE) -R licence-check.txt
+	rm -f $(TEMP_FILE)
+
+.PHONY: virtual-environment
 virtual-environment:  ## update virtual environment, create a new one if it doesn't already exist
-	poetry lock --no-update
-	# Put virtual environments in the project
-	poetry config virtualenvs.in-project true
-	poetry install --all-extras
-	poetry run jupyter nbextension enable --py widgetsnbextension
+	pdm lock --dev --group :all --strategy inherit_metadata
+	pdm install --dev --group :all
+	pdm run pre-commit install

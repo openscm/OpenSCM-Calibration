@@ -1,9 +1,3 @@
-# Massive thanks to https://github.com/marketplace/actions/install-poetry-action
-# Some more inspo for workflows could come from here
-# https://github.com/LaurenceRawlings/python-poetry-cicd/tree/main/.github/workflows
-
-# TODO: take a look at https://github.com/actions/cache/blob/main/caching-strategies.md#make-cache-read-only--reuse-cache-from-centralized-job
-# for caching
 name: CI
 
 on:
@@ -13,49 +7,38 @@ on:
     tags: ['v*']
 
 jobs:
-  linting-and-docs:
+  mypy:
     if: ${{ !github.event.pull_request.draft }}
     runs-on: ubuntu-latest
     steps:
       - name: Check out repository
-        uses: actions/checkout@v3
-      - name: Set up python
-        id: setup-python
-        uses: actions/setup-python@v4
+        uses: actions/checkout@v4
+      - uses: ./.github/actions/setup
         with:
           python-version: "3.11"
-      - name: Load cached Poetry installation
-        id: cached-poetry
-        uses: actions/cache@v3
-        with:
-          path: ~/.local  # the path depends on the OS
-          key: poetry-2  # increment to reset cache
-      - name: Install Poetry
-        if: steps.cached-poetry.outputs.cache-hit != 'true'
-        uses: snok/install-poetry@v1
-      - name: Load cached venv
-        id: cached-poetry-dependencies
-        uses: actions/cache@v3
-        with:
-          path: .venv
-          key: venv-linting-${{ steps.setup-python.outputs.python-version }}-${{ hashFiles('**/poetry.lock') }}
-      - name: Install dependencies
-        run: |
-          poetry config virtualenvs.create true
-          poetry config virtualenvs.in-project true
-          poetry install --no-interaction --no-root --all-extras
-      - name: Install package
-        run: poetry install --no-interaction --all-extras
-      - name: black
-        run: poetry run black --check src tests docs/source/conf.py
-      - name: ruff
-        run: poetry run ruff check src tests scripts
+          pdm-dependency-install-flags: "-G dev"
       - name: mypy
-        run: poetry run mypy src
-      - name: docs-linting
-        run: poetry run blacken-docs docs/source/notebooks/*.md
+        run: |
+          MYPYPATH=stubs pdm run mypy src
+
+  docs:
+    if: ${{ !github.event.pull_request.draft }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - uses: ./.github/actions/setup
+        with:
+          python-version: "3.11"
+          pdm-dependency-install-flags: "-G docs -G dev"
       - name: docs
-        run: poetry run sphinx-build -W --keep-going -b html docs/source docs/build
+        run: |
+          pdm run mkdocs build --strict
+          # Check CHANGELOG will build too
+          pdm run towncrier build --yes
+          pdm run mkdocs build --strict
+          # Just in case, undo the staged changes
+          git restore --staged . && git restore .
 
   tests:
     strategy:
@@ -63,62 +46,79 @@ jobs:
       matrix:
         os: [ "ubuntu-latest" ]
         python-version: [ "3.9", "3.10", "3.11" ]
-    runs-on: ${{ matrix.os }}
+    runs-on: "${{ matrix.os }}"
+    defaults:
+      run:
+        # This might be needed for Windows
+        # and doesn't seem to affect unix-based systems so we include it.
+        # If you have better proof of whether this is needed or not,
+        # feel free to update.
+        shell: bash
     steps:
       - name: Check out repository
-        uses: actions/checkout@v3
-      - name: Set up python ${{ matrix.python-version }}
-        id: setup-python
-        uses: actions/setup-python@v4
+        uses: actions/checkout@v4
+      - uses: ./.github/actions/setup
         with:
           python-version: ${{ matrix.python-version }}
-      - name: Load cached Poetry installation
-        id: cached-poetry
-        uses: actions/cache@v3
-        with:
-          path: ~/.local  # the path depends on the OS
-          key: ${{ runner.os }}-${{ steps.setup-python.outputs.python-version }}-poetry-1  # increment to reset cache
-      - name: Install Poetry
-        if: steps.cached-poetry.outputs.cache-hit != 'true'
-        uses: snok/install-poetry@v1
-      - name: Load cached venv
-        id: cached-poetry-dependencies
-        uses: actions/cache@v3
-        with:
-          path: .venv
-          key: venv-${{ runner.os }}-${{ steps.setup-python.outputs.python-version }}-${{ hashFiles('**/poetry.lock') }}
-      - name: Install dependencies
-        run: |
-          poetry config virtualenvs.create true
-          poetry config virtualenvs.in-project true
-          poetry install --no-interaction --no-root --only main
-      - name: Install package
-        run: poetry install --no-interaction --only main
-      - name: Check importable without extras
-        run: poetry run python scripts/test-install.py
-      - name: Load cached full venv
-        id: cached-poetry-dependencies-full
-        uses: actions/cache@v3
-        with:
-          path: .venv
-          key: venv-full-${{ runner.os }}-${{ steps.setup-python.outputs.python-version }}-${{ hashFiles('**/poetry.lock') }}
-      - name: Install full dependencies
-        run: |
-          poetry config virtualenvs.create true
-          poetry config virtualenvs.in-project true
-          poetry install --no-interaction --all-extras
+          pdm-dependency-install-flags: "-G tests"
       - name: Run tests
         run: |
-          poetry run pytest -r a -v --doctest-modules --cov --cov-report=term-missing --cov-report=xml
-          poetry run coverage report
+          pdm run pytest -r a -v src tests --doctest-modules --cov=src --cov-report=term-missing --cov-report=xml
+          pdm run coverage report
+      - name: Upload coverage reports to Codecov with GitHub Action
+        uses: codecov/codecov-action@v4.2.0
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+
+  imports-without-extras:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ "ubuntu-latest" ]
+        python-version: [ "3.9", "3.10", "3.11" ]
+    runs-on: "${{ matrix.os }}"
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - uses: ./.github/actions/setup
+        with:
+          python-version: ${{ matrix.python-version }}
+          pdm-dependency-install-flags: "--prod"
+      - name: Check importable without extras
+        run: pdm run python scripts/test-install.py
+
+  check-build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Setup PDM
+        uses: pdm-project/setup-pdm@v4
+        with:
+          python-version: "3.9"
+          pdm-dependency-install-flags: "not-used"
+          run-pdm-install: false
       - name: Build package
         run: |
-          poetry build --no-interaction
+          pdm build
       - name: Check build
         run: |
           tar -tvf dist/openscm_calibration-*.tar.gz --wildcards '*openscm_calibration/py.typed'
+          tar -tvf dist/openscm_calibration-*.tar.gz --wildcards 'openscm_calibration-*/LICENCE'
 
-      # TODO: Upload code coverage if ubuntu with Python 3.9
-
-# deploy (separate into different file and only do on master i.e. after tests
-#         have passed, or reuse test workflow before deploying)
+  check-dependency-licences:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - uses: ./.github/actions/setup
+        with:
+          python-version: "3.9"
+          pdm-dependency-install-flags: "-G dev"
+      - name: Check licences of dependencies
+        shell: bash
+        run: |
+          TEMP_FILE=$(mktemp)
+          pdm export --prod > $TEMP_FILE
+          pdm run liccheck -r $TEMP_FILE -R licence-check.txt
+          cat licence-check.txt

@@ -260,7 +260,7 @@ def test_note_failed_run(
         ),
     ),
 )
-def test_get_costs_xsamples_res(
+def test_get_costs_xsamples_res(  # noqa: PLR0913
     mock_res, mock_xs, mock_costs, dummy_store, costs, x_samples, res, exp
 ):
     mock_costs.return_value = costs
@@ -381,7 +381,7 @@ def test_get_costs_xsamples_res(
         ),
     ),
 )
-def test_get_costs_labelled_xsamples_res(
+def test_get_costs_labelled_xsamples_res(  # noqa: PLR0913
     mock_res, mock_xs, mock_costs, dummy_store, costs, parameters, x_samples, res, exp
 ):
     dummy_store.params = parameters
@@ -407,7 +407,7 @@ def test_get_costs_labelled_xsamples_res(
 
 
 @pytest.mark.parametrize("in_name", ("costs", "x_samples"))
-def test_init_wrong_length(
+def test_init_wrong_length(  # noqa: PLR0913
     dummy_res, dummy_costs, dummy_xs, dummy_parameters, dummy_avail_indices, in_name
 ):
     inp = {
@@ -430,7 +430,7 @@ def test_init_wrong_length(
 
 
 @pytest.mark.parametrize("in_name", ("res", "costs", "x_samples"))
-def test_init_not_none(
+def test_init_not_none(  # noqa: PLR0913
     dummy_res, dummy_costs, dummy_xs, dummy_parameters, dummy_avail_indices, in_name
 ):
     inp = {

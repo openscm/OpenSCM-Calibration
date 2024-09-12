@@ -5,7 +5,7 @@
 groups = ["default", "dev", "docs", "notebooks", "plots", "test", "tests"]
 strategy = ["inherit_metadata"]
 lock_version = "4.5.0"
-content_hash = "sha256:dc006e95567d4bb6053910019d07381db432959c3808e4b796451ac39bcc7f5b"
+content_hash = "sha256:94d11b92026d328e5e518565670edb9e6f639ba1796f7dd2c6b14113fe5b953e"
 
 [[metadata.targets]]
 requires_python = ">=3.9"
@@ -434,7 +434,7 @@ name = "contourpy"
 version = "1.3.0"
 requires_python = ">=3.9"
 summary = "Python library for calculating contours of 2D quadrilateral grids"
-groups = ["notebooks", "plots"]
+groups = ["dev", "notebooks", "plots"]
 dependencies = [
     "numpy>=1.23",
 ]
@@ -672,7 +672,7 @@ name = "cycler"
 version = "0.12.1"
 requires_python = ">=3.8"
 summary = "Composable style cycles"
-groups = ["notebooks", "plots"]
+groups = ["dev", "notebooks", "plots"]
 files = [
     {file = "cycler-0.12.1-py3-none-any.whl", hash = "sha256:85cef7cff222d8644161529808465972e51340599459b8ac3ccbac5a854e0d30"},
     {file = "cycler-0.12.1.tar.gz", hash = "sha256:88bb128f02ba341da8ef447245a9e138fae777f6a23943da4540077d3601eb1c"},
@@ -872,7 +872,7 @@ name = "fonttools"
 version = "4.53.1"
 requires_python = ">=3.8"
 summary = "Tools to manipulate font files"
-groups = ["notebooks", "plots"]
+groups = ["dev", "notebooks", "plots"]
 files = [
     {file = "fonttools-4.53.1-cp310-cp310-macosx_10_9_universal2.whl", hash = "sha256:0679a30b59d74b6242909945429dbddb08496935b82f91ea9bf6ad240ec23397"},
     {file = "fonttools-4.53.1-cp310-cp310-macosx_11_0_arm64.whl", hash = "sha256:e8bf06b94694251861ba7fdeea15c8ec0967f84c3d4143ae9daf42bbc7717fe3"},
@@ -1504,7 +1504,7 @@ name = "kiwisolver"
 version = "1.4.7"
 requires_python = ">=3.8"
 summary = "A fast implementation of the Cassowary constraint solver"
-groups = ["notebooks", "plots"]
+groups = ["dev", "notebooks", "plots"]
 files = [
     {file = "kiwisolver-1.4.7-cp310-cp310-macosx_10_9_universal2.whl", hash = "sha256:8a9c83f75223d5e48b0bc9cb1bf2776cf01563e00ade8775ffe13b0b6e1af3a6"},
     {file = "kiwisolver-1.4.7-cp310-cp310-macosx_10_9_x86_64.whl", hash = "sha256:58370b1ffbd35407444d57057b57da5d6549d2d854fa30249771775c63b5fe17"},
@@ -1699,7 +1699,7 @@ name = "matplotlib"
 version = "3.9.2"
 requires_python = ">=3.9"
 summary = "Python plotting package"
-groups = ["notebooks", "plots"]
+groups = ["dev", "notebooks", "plots"]
 dependencies = [
     "contourpy>=1.0.1",
     "cycler>=0.10",
@@ -2210,7 +2210,7 @@ name = "numpy"
 version = "2.0.2"
 requires_python = ">=3.9"
 summary = "Fundamental package for array computing in Python"
-groups = ["default", "notebooks", "plots", "tests"]
+groups = ["default", "dev", "notebooks", "plots", "tests"]
 files = [
     {file = "numpy-2.0.2-cp310-cp310-macosx_10_9_x86_64.whl", hash = "sha256:51129a29dbe56f9ca83438b706e2e69a39892b5eda6cedcb6b0c9fdc9b0d3ece"},
     {file = "numpy-2.0.2-cp310-cp310-macosx_11_0_arm64.whl", hash = "sha256:f15975dfec0cf2239224d80e32c3170b1d168335eaedee69da84fbe9f1f9cd04"},
@@ -2294,7 +2294,7 @@ name = "packaging"
 version = "24.1"
 requires_python = ">=3.8"
 summary = "Core utilities for Python packages"
-groups = ["docs", "notebooks", "plots", "test"]
+groups = ["dev", "docs", "notebooks", "plots", "test"]
 files = [
     {file = "packaging-24.1-py3-none-any.whl", hash = "sha256:5b8f2217dbdbd2f7f384c41c628544e6d52f2d0f53c6d0c3ea61aa5d1d7ff124"},
     {file = "packaging-24.1.tar.gz", hash = "sha256:026ed72c8ed3fcce5bf8950572258698927fd1dbda10a5e981cdf0ac37f4f002"},
@@ -2357,6 +2357,21 @@ files = [
 ]
 
 [[package]]
+name = "pandas-stubs"
+version = "2.2.2.240807"
+requires_python = ">=3.9"
+summary = "Type annotations for pandas"
+groups = ["dev"]
+dependencies = [
+    "numpy>=1.23.5",
+    "types-pytz>=2022.1.1",
+]
+files = [
+    {file = "pandas_stubs-2.2.2.240807-py3-none-any.whl", hash = "sha256:893919ad82be4275f0d07bb47a95d08bae580d3fdea308a7acfcb3f02e76186e"},
+    {file = "pandas_stubs-2.2.2.240807.tar.gz", hash = "sha256:64a559725a57a449f46225fbafc422520b7410bff9252b661a225b5559192a93"},
+]
+
+[[package]]
 name = "pandocfilters"
 version = "1.5.1"
 requires_python = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
@@ -2408,7 +2423,7 @@ name = "pillow"
 version = "10.4.0"
 requires_python = ">=3.8"
 summary = "Python Imaging Library (Fork)"
-groups = ["notebooks", "plots"]
+groups = ["dev", "notebooks", "plots"]
 files = [
     {file = "pillow-10.4.0-cp310-cp310-macosx_10_10_x86_64.whl", hash = "sha256:4d9667937cfa347525b319ae34375c37b9ee6b525440f3ef48542fcf66f2731e"},
     {file = "pillow-10.4.0-cp310-cp310-macosx_11_0_arm64.whl", hash = "sha256:543f3dc61c18dafb755773efc89aae60d06b6596a63914107f75459cf984164d"},
@@ -2670,7 +2685,7 @@ name = "pyparsing"
 version = "3.1.4"
 requires_python = ">=3.6.8"
 summary = "pyparsing module - Classes and methods to define and execute parsing grammars"
-groups = ["notebooks", "plots"]
+groups = ["dev", "notebooks", "plots"]
 files = [
     {file = "pyparsing-3.1.4-py3-none-any.whl", hash = "sha256:a6a7ee4235a3f944aa1fa2249307708f893fe5717dc603503c6c7969c070fb7c"},
     {file = "pyparsing-3.1.4.tar.gz", hash = "sha256:f86ec8d1a83f11977c9a6ea7598e8c27fc5cddfa5b07ea2241edbbde1d7bc032"},
@@ -2715,7 +2730,7 @@ name = "python-dateutil"
 version = "2.9.0.post0"
 requires_python = "!=3.0.*,!=3.1.*,!=3.2.*,>=2.7"
 summary = "Extensions to the standard Python datetime module"
-groups = ["default", "docs", "notebooks", "plots"]
+groups = ["default", "dev", "docs", "notebooks", "plots"]
 dependencies = [
     "six>=1.5",
 ]
@@ -3299,7 +3314,7 @@ name = "six"
 version = "1.16.0"
 requires_python = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*"
 summary = "Python 2 and 3 compatibility utilities"
-groups = ["default", "docs", "notebooks", "plots"]
+groups = ["default", "dev", "docs", "notebooks", "plots"]
 files = [
     {file = "six-1.16.0-py2.py3-none-any.whl", hash = "sha256:8abb2f1d86890a2dfb989f9a77cfcfd3e47c2a354b01111771326f8aa26e0254"},
     {file = "six-1.16.0.tar.gz", hash = "sha256:1e61c37477a1626458e36f7b1d82aa5c9b094fa4802892072e49de9c60c4c926"},
@@ -3467,6 +3482,44 @@ groups = ["docs", "notebooks"]
 files = [
     {file = "types-python-dateutil-2.9.0.20240906.tar.gz", hash = "sha256:9706c3b68284c25adffc47319ecc7947e5bb86b3773f843c73906fd598bc176e"},
     {file = "types_python_dateutil-2.9.0.20240906-py3-none-any.whl", hash = "sha256:27c8cc2d058ccb14946eebcaaa503088f4f6dbc4fb6093d3d456a49aef2753f6"},
+]
+
+[[package]]
+name = "types-pytz"
+version = "2024.1.0.20240417"
+requires_python = ">=3.8"
+summary = "Typing stubs for pytz"
+groups = ["dev"]
+files = [
+    {file = "types-pytz-2024.1.0.20240417.tar.gz", hash = "sha256:6810c8a1f68f21fdf0f4f374a432487c77645a0ac0b31de4bf4690cf21ad3981"},
+    {file = "types_pytz-2024.1.0.20240417-py3-none-any.whl", hash = "sha256:8335d443310e2db7b74e007414e74c4f53b67452c0cb0d228ca359ccfba59659"},
+]
+
+[[package]]
+name = "types-seaborn"
+version = "0.13.2.20240820"
+requires_python = ">=3.9"
+summary = "Typing stubs for seaborn"
+groups = ["dev"]
+dependencies = [
+    "matplotlib>=3.8",
+    "numpy<2.1.0,>=1.20",
+    "pandas-stubs",
+]
+files = [
+    {file = "types-seaborn-0.13.2.20240820.tar.gz", hash = "sha256:0a9785a669a483c7259df2d6c3221560019bb3fd9ceb77008b7d398b5306de9a"},
+    {file = "types_seaborn-0.13.2.20240820-py3-none-any.whl", hash = "sha256:08a3824a222e8fd9b448f2848c0c5f5847a8194e6974e1444eef6f23410a72c1"},
+]
+
+[[package]]
+name = "types-tqdm"
+version = "4.66.0.20240417"
+requires_python = ">=3.8"
+summary = "Typing stubs for tqdm"
+groups = ["dev"]
+files = [
+    {file = "types-tqdm-4.66.0.20240417.tar.gz", hash = "sha256:16dce9ef522ea8d40e4f5b8d84dd8a1166eefc13ceee7a7e158bf0f1a1421a31"},
+    {file = "types_tqdm-4.66.0.20240417-py3-none-any.whl", hash = "sha256:248aef1f9986b7b8c2c12b3cb4399fc17dba0a29e7e3f3f9cd704babb879383d"},
 ]
 
 [[package]]

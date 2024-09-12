@@ -84,7 +84,7 @@ class NotExpectedAllSameValueError(ValueError):
 
 class MismatchLengthError(ValueError):
     """
-    Raised when we expect an object to have the same length as something else, but it doesn't
+    Raised when an object should have the same length as something else, but doesn't
     """
 
     def __init__(
@@ -143,15 +143,15 @@ class MissingValueError(ValueError):
 
 class AlignmentError(ValueError):
     """
-    Raised when two :obj:`pd.DataFrame` do not align smoothly
+    Raised when two [pd.DataFrame][] do not align smoothly
     """
 
     def __init__(  # noqa: PLR0913
         self,
         name_left: str,
-        val_left: pd.DataFrame,
+        val_left: pd.DataFrame | pd.Series,
         name_right: str,
-        val_right: pd.DataFrame,
+        val_right: pd.DataFrame | pd.Series,
         extra_context: str | None = None,
     ) -> None:
         """

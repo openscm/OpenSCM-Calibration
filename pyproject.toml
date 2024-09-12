@@ -208,6 +208,9 @@ dev = [
     "pip>=24.2",
     "towncrier>=24.8.0",
     "mypy~=1.11",
+    "pandas-stubs>=2.2.2.240807",
+    "types-seaborn>=0.13.2.20240820",
+    "types-tqdm>=4.66.0.20240417",
 ]
 docs = [
     "attrs>=24.0.0",

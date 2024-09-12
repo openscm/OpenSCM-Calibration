@@ -30,7 +30,7 @@ class XToNamedPintConvertor(Protocol):
     def __call__(
         self,
         x: np.typing.NDArray[np.number[Any]],
-    ) -> dict[str, pint.Quantity[np.float64] | np.float64]:
+    ) -> dict[str, pint.registry.UnitRegistry.Quantity]:
         """
         Convert x to pint quantities
         """
@@ -41,9 +41,7 @@ class ModelRunsInputGenerator(Protocol):
     Callable that supports generating model run inputs
     """
 
-    def __call__(
-        self, **kwargs: pint.Quantity[np.float64] | np.float64
-    ) -> dict[str, Any]:
+    def __call__(self, **kwargs: pint.registry.UnitRegistry.Quantity) -> dict[str, Any]:
         """
         Generate model run inputs
         """
@@ -68,13 +66,13 @@ class OptModelRunner:
 
     convert_x_to_names_with_units: XToNamedPintConvertor
     """
-    Callable used to translate the x-array into input for ``do_model_runs_input_generator``
+    Callable to translate the x-array into input for `self.do_model_runs_input_generator`
 
-    This translates from the x-array used internally by e.g. scipy and
-    emcee into a dictionary with meaningful keys and quantities with units (as
-    needed). It must produce named output that can be passed directly to
-    ``self.do_model_runs_input_generator``.
-    """
+    This translates from the x-array used internally by e.g. scipy and emcee
+    into a dictionary with meaningful keys and quantities with units (as needed).
+    It must produce named output that can be passed directly to
+    `self.do_model_runs_input_generator`.
+    """  # noqa: E501
 
     do_model_runs_input_generator: ModelRunsInputGenerator
     """
@@ -162,7 +160,7 @@ def x_and_parameters_to_named_with_units(
     x: np.typing.NDArray[np.number[Any]],
     params: Iterable[tuple[str, str | pint.Unit | None]],
     get_unit_registry: Callable[[], pint.UnitRegistry] | None = None,
-) -> dict[str, pint.Quantity[np.floating[Any]] | np.floating[Any]]:
+) -> dict[str, pint.registry.UnitRegistry.Quantity]:
     """
     Convert x array and parameters to a dictionary and add units
 
@@ -212,10 +210,10 @@ def x_and_parameters_to_named_with_units(
     ...     get_ur_with_pop,
     ... )
     {'para_a': <Quantity(1.1, 'meter')>, 'pop_weight': <Quantity(3.2, 'thousands')>, 'factor': 4.0}
-    """
+    """  # noqa: E501
     unit_reg = get_unit_registry() if get_unit_registry else openscm_units.unit_registry
 
-    out = {}
+    out: dict[str, pint.registry.UnitRegistry.Quantity] = {}
     for val, (key, unit) in zip(x, params):
         if unit is not None:
             val_out = unit_reg.Quantity(val, unit)

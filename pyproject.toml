@@ -12,6 +12,12 @@ dependencies = [
     "pint",
     # TODO: remove when addressing #26
     "scmdata~=0.17",
+    # TODO: remove when addressing #26 ?
+    "more-itertools~=10.5",
+    # TODO: remove when addressing #26 ?
+    "seaborn~=0.13",
+    # TODO: remove when addressing #26 ?
+    "corner~=2.0",
 ]
 readme = "README.md"
 
@@ -37,7 +43,6 @@ notebooks = [
     "tqdm~=4.66",
     "h5py~=3.11",
     "ipywidgets~=8.1",
-    "more-itertools~=10.5",
 ]
 tests = [
     "emcee~=3.1",

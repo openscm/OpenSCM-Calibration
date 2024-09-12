@@ -88,7 +88,7 @@ platformdirs==4.3.2
 prometheus-client==0.20.0
 prompt-toolkit==3.0.47
 psutil==6.0.0
-ptyprocess==0.7.0; os_name != "nt" or sys_platform != "win32"
+ptyprocess==0.7.0; sys_platform != "win32" or os_name != "nt"
 pure-eval==0.2.3
 pycparser==2.22
 pygments==2.18.0

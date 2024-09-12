@@ -13,11 +13,15 @@ build:
   tools:
     python: "3.11"
   jobs:
+    post_create_environment:
+      - pip install pdm
     post_install:
-      # RtD seems to be not happy with pdm installs,
+      # RtD seems to be not happy with poetry installs,
       # hence use pip directly instead.
       - python -m pip install -r requirements-docs.txt
       - python -m pip list
+    pre_build:
+      - pip install --no-deps .
 
 mkdocs:
   configuration: mkdocs.yml

@@ -1,9 +1,24 @@
-# Notebooks and related stuff
+# Notebooks
 *.ipynb
-*.h5
+
+# Auto-generated docs and helper files
+docs/api/*
+!docs/api/.gitkeep
+
+# Databases
+*.db
 
 # Jupyter cache
 .jupyter_cache
+
+# IDE stuff
+.idea/
+
+# Ruff cache
+.ruff_cache
+
+# Licence check
+licence-check.txt
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

@@ -1,40 +1,50 @@
-# Inspired by https://github.com/LaurenceRawlings/python-poetry-cicd/blob/main/.github/workflows/release.yml
 name: Release
 
 on:
-  release:
-    types: [published]
+  push:
+    tags: ['v*']
 
 defaults:
   run:
     shell: bash
 
 jobs:
-  deploy:
-    name: Create Release
+  draft-release:
+    name: Create draft release
     runs-on: ubuntu-latest
     steps:
       - name: Check out repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - name: Set up Python 3.9
-        uses: actions/setup-python@v4
+      - name: Setup PDM
+        uses: pdm-project/setup-pdm@v4
         with:
           python-version: "3.9"
-      - name: Install Poetry
-        uses: snok/install-poetry@v1
-      - name: Install dependencies and package
+      - name: Add version to environment
         run: |
-          poetry config virtualenvs.create true
-          poetry config virtualenvs.in-project true
-          poetry install --no-interaction --all-extras
-      - name: Run tests
+          PROJECT_VERSION=`sed -ne 's/^version = "\([0-9\.a]*\)"/\1/p' pyproject.toml`
+          echo "PROJECT_VERSION=$PROJECT_VERSION" >> $GITHUB_ENV
+      - name: Build package for PyPI
         run: |
-          poetry run pytest -r a --doctest-modules
-      - name: Publish to PyPI
-        env:
-          PYPI_TOKEN: ${{ secrets.PYPI_TOKEN }}
+          pdm build
+      - name: Generate Release Notes
         run: |
-          poetry config pypi-token.pypi $PYPI_TOKEN
-          poetry publish --build --no-interaction
+          echo "" >> ".github/release_template.md"
+          echo "## Changelog" >> ".github/release_template.md"
+          echo "" >> ".github/release_template.md"
+          pdm add typer
+          pdm run python scripts/changelog-to-release-template.py >> ".github/release_template.md"
+          echo "" >> ".github/release_template.md"
+          echo "## Changes" >> ".github/release_template.md"
+          echo "" >> ".github/release_template.md"
+          git log $(git describe --tags --abbrev=0 HEAD^)..HEAD --pretty='format:* %h %s' --no-merges >> ".github/release_template.md"
+      - name: Create Release Draft
+        uses: softprops/action-gh-release@v2
+        with:
+          body_path: ".github/release_template.md"
+          token: "${{ secrets.PERSONAL_ACCESS_TOKEN }}"
+          draft: true
+          files: |
+            dist/openscm_calibration-${{ env.PROJECT_VERSION }}-py3-none-any.whl
+            dist/openscm_calibration-${{ env.PROJECT_VERSION }}.tar.gz

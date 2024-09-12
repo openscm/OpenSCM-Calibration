@@ -1,7 +1,5 @@
 """
-OpenSCM-Calibration
-
-Calibration tools for simple climate models (SCM)
+Calibration tools for simple climate models (with potential for applications elsewhere)
 """
 import importlib.metadata
 

@@ -1,0 +1,17 @@
+# Changes here will be overwritten by Copier; NEVER EDIT MANUALLY
+_commit: v0.1.0
+_src_path: gl:znicholls/copier-core-python-repository
+email: zebedee.nicholls@climate-energy-college.org
+include_cli: false
+name: Zebedee Nicholls
+notebook_based_docs: true
+notebook_dependencies: true
+pandas_doctests: true
+plot_dependencies: true
+project_description_short: Calibration tools for simple climate models (with potential
+    for applications elsewhere)
+project_name_human: OpenSCM Calibration
+project_name_pip: openscm-calibration
+project_name_python: openscm_calibration
+project_url: https://github.com/openscm/OpenSCM-Calibration
+track_lock_file: true

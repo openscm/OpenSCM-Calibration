@@ -71,7 +71,7 @@ def get_fig_axes_holder_from_mosaic(
         )
 
     fig, axes = plt.subplot_mosaic(
-        mosaic=mosaic,
+        mosaic=mosaic,  # type: ignore # matplotlib's type hints are unclear
         **kwargs,
     )
     holder = IPython.display.display(fig, display_id=True)  # type: ignore

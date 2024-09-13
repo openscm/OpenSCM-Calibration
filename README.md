@@ -9,11 +9,6 @@ To do:
     - install the package too, otherwise doc auto-generation doesn't work
         - also push this to copier
 
-For #26:
-- install all optional dependencies for the tests
-    - we want the tests to run with maximum coverage
-        - also push this to copier
-
 Calibration tools for simple climate models (with potential for applications elsewhere)
 
 **Key info :**

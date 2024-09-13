@@ -28,6 +28,8 @@ TITLE_RENAMINGS = {
     # This can be used to disable capitalisation,
     # add spaces etc.
     "cli": "CLI",
+    "emcee_plotting": "emcee Plotting",
+    "emcee_utils": "emcee Utils",
     "openscm_calibration": "openscm_calibration",
 }
 

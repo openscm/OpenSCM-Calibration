@@ -5,22 +5,20 @@ scmdata utility functions
 from __future__ import annotations
 
 from collections.abc import Iterable
-from typing import TYPE_CHECKING
 
-if TYPE_CHECKING:
-    import scmdata.run
+import scmdata.run
 
 
 def scmrun_as_dict(
     inp: scmdata.run.BaseScmRun, groups: Iterable[str], separator: str = "_"
 ) -> dict[str, scmdata.run.BaseScmRun]:
     """
-    Group an :obj:`scmdata.run.BaseScmRun` into a dictionary with keys
+    Group an input into a dictionary with keys
 
     Parameters
     ----------
     inp
-        [scmdata.run.BaseScmRun][] to group
+        Data to group
 
     groups
         Metadata keys to use to make the groups

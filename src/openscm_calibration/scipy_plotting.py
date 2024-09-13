@@ -16,7 +16,9 @@ from typing import (
 
 import more_itertools
 import numpy as np
+import pandas as pd
 import scmdata
+import scmdata.run
 from attrs import define, field
 
 from openscm_calibration.exceptions import MissingValueError
@@ -25,8 +27,6 @@ from openscm_calibration.matplotlib_utils import get_fig_axes_holder_from_mosaic
 if TYPE_CHECKING:
     import attr
     import matplotlib
-    import pandas as pd
-    import scmdata.run
     import tqdm
 
     from openscm_calibration.store import OptResStore
@@ -283,9 +283,14 @@ class OptPlotter:
 
     get_timeseries: Callable[[scmdata.run.BaseScmRun], pd.DataFrame] | None = None
     """
-    Function which converts [scmdata.run.BaseScmRun][] into a [pd.DataFrame][]
+    Function which converts data into timeseries.
 
-    If not provided, [get_timeseries_default][] is used
+    Specifically, converts a [`scmdata.run.BaseScmRun`][scmdata.run.BaseScmRun]
+    into a [`pandas.DataFrame`][pandas.DataFrame].
+
+    If not provided,
+    [`get_timeseries_default`][openscm_calibration.scipy_plotting.get_timeseries_default]
+    is used.
     """
 
     def callback_minimize(

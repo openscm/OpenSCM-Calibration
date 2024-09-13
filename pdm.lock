@@ -5,7 +5,7 @@
 groups = ["default", "dev", "docs", "plots", "scmdata", "tests"]
 strategy = ["inherit_metadata"]
 lock_version = "4.5.0"
-content_hash = "sha256:5618a73f895b001fb502ff754f3656aec9a6a856e17c1703cd444a29800cd42c"
+content_hash = "sha256:2c7057573cbd569637cf104dadbea62f8735f108e6eafbe2713a030a252d683d"
 
 [[metadata.targets]]
 requires_python = ">=3.9"
@@ -31,7 +31,7 @@ files = [
 name = "appdirs"
 version = "1.4.4"
 summary = "A small Python module for determining appropriate platform-specific dirs, e.g. a \"user data dir\"."
-groups = ["docs", "scmdata"]
+groups = ["default", "docs", "scmdata"]
 files = [
     {file = "appdirs-1.4.4-py2.py3-none-any.whl", hash = "sha256:a841dacd6b99318a741b166adb07e19ee71a274450e68237b4650ca1055ab128"},
     {file = "appdirs-1.4.4.tar.gz", hash = "sha256:7d5d0167b2b1ba821647616af46a749d1c653740dd0d2415100fe26e27afdf41"},
@@ -844,7 +844,7 @@ name = "flexcache"
 version = "0.3"
 requires_python = ">=3.9"
 summary = "Saves and loads to the cache a transformed versions of a source object."
-groups = ["docs", "scmdata"]
+groups = ["default", "docs", "scmdata"]
 dependencies = [
     "typing-extensions",
 ]
@@ -858,7 +858,7 @@ name = "flexparser"
 version = "0.3.1"
 requires_python = ">=3.9"
 summary = "Parsing made fun ... using typing."
-groups = ["docs", "scmdata"]
+groups = ["default", "docs", "scmdata"]
 dependencies = [
     "typing-extensions",
 ]
@@ -2502,7 +2502,7 @@ name = "pint"
 version = "0.24.3"
 requires_python = ">=3.9"
 summary = "Physical quantities module"
-groups = ["docs", "scmdata"]
+groups = ["default", "docs", "scmdata"]
 dependencies = [
     "appdirs>=1.4.4",
     "flexcache>=0.3",
@@ -3527,7 +3527,7 @@ name = "typing-extensions"
 version = "4.12.2"
 requires_python = ">=3.8"
 summary = "Backported and Experimental Type Hints for Python 3.8+"
-groups = ["dev", "docs", "plots", "scmdata"]
+groups = ["default", "dev", "docs", "plots", "scmdata"]
 files = [
     {file = "typing_extensions-4.12.2-py3-none-any.whl", hash = "sha256:04e5ca0351e0f3f85c6853954072df659d0d13fac324d0072316b67d7794700d"},
     {file = "typing_extensions-4.12.2.tar.gz", hash = "sha256:1a7ead55c7e559dd4dee8856e3a88b41225abfe1ce8df57b7c13915fe121ffb8"},

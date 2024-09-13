@@ -139,8 +139,6 @@ def test_append_result_cost_x(
     mock_get_available_index.return_value = idx
 
     res = MagicMock()
-    res_keep = MagicMock()
-    res.copy.return_value = res_keep
 
     dummy_store.append_result_cost_x(
         res=res,
@@ -148,11 +146,8 @@ def test_append_result_cost_x(
         x=x,
     )
 
-    res.copy.assert_called_once()
-    res_keep.__setitem__.assert_called_with("it", idx)
-
     mock_set_result_cost_x.assert_called_with(
-        res=res_keep,
+        res=res,
         cost=cost,
         x=x,
         idx=idx,

@@ -8,7 +8,9 @@ import pandas.testing as pdt
 import pytest
 import scmdata.run
 
-from openscm_calibration.scipy_plotting import get_timeseries_default
+from openscm_calibration.scipy_plotting import get_timeseries_scmrun
+
+RNG = np.random.default_rng()
 
 
 @pytest.mark.parametrize(
@@ -31,7 +33,7 @@ def test_get_timeseries_default(time_axis, years, years_exp):
     )
 
     inp_ts = pd.DataFrame(
-        np.random.random(size=(index.size, len(years))),
+        RNG.random(size=(index.size, len(years))),
         columns=years,
         index=index,
     )
@@ -43,7 +45,7 @@ def test_get_timeseries_default(time_axis, years, years_exp):
         if para is not None:
             call_kwargs[name] = para
 
-    res = get_timeseries_default(inp, **call_kwargs)
+    res = get_timeseries_scmrun(inp, **call_kwargs)
 
     exp = inp_ts.set_index(["variable", "unit"]).T
     exp.index = years_exp

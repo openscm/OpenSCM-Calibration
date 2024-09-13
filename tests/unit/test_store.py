@@ -41,7 +41,11 @@ def dummy_parameters():
 
 @pytest.fixture()
 def dummy_store(
-    dummy_res, dummy_costs, dummy_xs, dummy_parameters, dummy_avail_indices
+    dummy_res,
+    dummy_costs,
+    dummy_xs,
+    dummy_parameters,
+    dummy_avail_indices,
 ):
     return OptResStore(
         res=dummy_res,
@@ -49,6 +53,7 @@ def dummy_store(
         x_samples=dummy_xs,
         params=dummy_parameters,
         available_indices=dummy_avail_indices,
+        add_iteration_to_res=None,
     )
 
 
@@ -86,7 +91,7 @@ def test_get_available_index(dummy_store):
 )
 @pytest.mark.parametrize("idx", (0, 1, 2))
 def test_set_result_cost_x(res, cost, x, parameters, idx):
-    store = OptResStore.from_n_runs(3, params=parameters)
+    store = OptResStore.from_n_runs(3, params=parameters, add_iteration_to_res=None)
 
     store.set_result_cost_x(
         res=res,
@@ -109,7 +114,7 @@ def test_set_result_cost_x(res, cost, x, parameters, idx):
     ),
 )
 def test_set_result_cost_x_raises(parameters, x):
-    store = OptResStore.from_n_runs(3, params=parameters)
+    store = OptResStore.from_n_runs(3, params=parameters, add_iteration_to_res=None)
 
     error_msg = re.escape(
         f"``x`` has length {len(x)}, it should have length {len(parameters)}, "
@@ -133,14 +138,27 @@ def test_append_result_cost_x(
     mock_get_available_index,
     cost,
     x,
-    dummy_store,
 ):
     idx = 11
     mock_get_available_index.return_value = idx
 
+    def add_iteration_to_res(res, iteration):
+        res.iteration = iteration
+
+        return res
+
+    store = OptResStore(
+        res=[None] * 4,
+        costs=[None] * 4,
+        x_samples=[None] * 4,
+        params=["m", "c"],
+        available_indices=list(range(4)),
+        add_iteration_to_res=add_iteration_to_res,
+    )
+
     res = MagicMock()
 
-    dummy_store.append_result_cost_x(
+    store.append_result_cost_x(
         res=res,
         cost=cost,
         x=x,
@@ -152,6 +170,9 @@ def test_append_result_cost_x(
         x=x,
         idx=idx,
     )
+    # Side effect in this case, but doesn't have to be if the user
+    # copies data as part of add_iteration_to_res.
+    assert res.iteration == idx
 
 
 @patch("openscm_calibration.store.OptResStore.get_available_index")
@@ -420,6 +441,7 @@ def test_init_wrong_length(  # noqa: PLR0913
             res=dummy_res,
             params=dummy_parameters,
             available_indices=dummy_avail_indices,
+            add_iteration_to_res=None,
             **inp,
         )
 
@@ -440,6 +462,7 @@ def test_init_not_none(  # noqa: PLR0913
         OptResStore(
             available_indices=dummy_avail_indices,
             params=dummy_parameters,
+            add_iteration_to_res=None,
             **inp,
         )
 
@@ -455,6 +478,7 @@ def test_init_indices_can_shuffle(
         x_samples=dummy_xs,
         params=dummy_parameters,
         available_indices=dummy_avail_indices,
+        add_iteration_to_res=None,
     )
 
 
@@ -474,14 +498,14 @@ def test_init_indices_wrong(
             x_samples=dummy_xs,
             params=dummy_parameters,
             available_indices=dummy_avail_indices,
+            add_iteration_to_res=None,
         )
 
 
 @pytest.mark.parametrize("n_runs", (3, 5, 23))
 def test_from_n_runs(n_runs, dummy_parameters):
     init = OptResStore.from_n_runs(
-        n_runs,
-        params=dummy_parameters,
+        n_runs, params=dummy_parameters, add_iteration_to_res="not used"
     )
 
     assert len(init.res) == n_runs
@@ -489,6 +513,7 @@ def test_from_n_runs(n_runs, dummy_parameters):
     assert len(init.x_samples) == n_runs
     assert init.params == dummy_parameters
     assert init.available_indices == list(range(n_runs))[::-1]
+    assert init.add_iteration_to_res == "not used"
 
 
 @pytest.mark.parametrize("n_runs", (3, 5, 23))
@@ -498,7 +523,10 @@ def test_from_n_runs_manager(n_runs, dummy_parameters):
     mock_manager.list.side_effect = list
 
     init = OptResStore.from_n_runs_manager(
-        n_runs, manager=mock_manager, params=dummy_parameters
+        n_runs,
+        manager=mock_manager,
+        params=dummy_parameters,
+        add_iteration_to_res="not used",
     )
 
     exp_res = [None] * n_runs
@@ -517,6 +545,7 @@ def test_from_n_runs_manager(n_runs, dummy_parameters):
     assert init.x_samples == exp_res
     assert init.params == dummy_parameters
     assert init.available_indices == exp_avail_indices
+    assert init.add_iteration_to_res == "not used"
 
 
 @pytest.mark.parametrize("n_runs", (3, 5, 23))
@@ -526,7 +555,7 @@ def test_from_n_runs_manager_multiprocess(n_runs, dummy_parameters):
 
     with Manager() as manager:
         init = OptResStore.from_n_runs_manager(
-            n_runs, manager=manager, params=dummy_parameters
+            n_runs, manager=manager, params=dummy_parameters, add_iteration_to_res=None
         )
 
         assert list(init.res) == exp_res

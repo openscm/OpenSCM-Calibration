@@ -53,7 +53,10 @@ from openscm_calibration.scmdata_utils import scmrun_as_dict
 from openscm_calibration.store import OptResStore
 
 # %%
-RNG = np.random.default_rng()
+# Set the seed to ensure reproducibility
+seed = 424242
+np.random.seed(seed)  # noqa: NPY002 # want to set global seed for emcee
+RNG = np.random.default_rng(seed=seed)
 
 # %% [markdown]
 # ## Background
@@ -644,7 +647,7 @@ ndim = len(bounds)
 # emcwrap docs suggest 5 * ndim
 nwalkers = 5 * ndim
 
-start_emcee = [s + s / 100 * RNG.rand(nwalkers) for s in optimize_res_local.x]
+start_emcee = [s + s / 100 * RNG.random(nwalkers) for s in optimize_res_local.x]
 start_emcee = np.vstack(start_emcee).T
 
 move = DIMEMove()
@@ -658,9 +661,6 @@ backend.reset(nwalkers, ndim)
 # %%
 # How many parallel process to use
 processes = 4
-
-# Set the seed to ensure reproducibility
-np.random.seed(424242)  # noqa: NPY002 # want to set global seed for emcee
 
 ## MCMC options
 # Unclear at the start how many iterations are needed to sample

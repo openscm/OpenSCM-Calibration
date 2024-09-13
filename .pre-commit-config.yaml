@@ -46,11 +46,10 @@ repos:
       # so that we can build locked version of the package.
       - id: pdm-lock-check
         args: [ --dev, --group, ":all", "--strategy", "inherit_metadata" ]
-      # Disable while we have no dependencies
-      # # Put a requirements.txt file in the repo too
-      # - id: pdm-export
-      #   args: ['--prod', '-o', 'requirements.txt', '--without-hashes']
       # Put a requirements.txt file in the repo too
       - id: pdm-export
-        args: ['--no-default', '-G', 'docs', '-o', 'requirements-docs.txt', '--without-hashes']
+        args: ['--prod', '-o', 'requirements.txt', '--without-hashes']
+      # Docs requirements
+      - id: pdm-export
+        args: ['-G', 'docs', '-o', 'requirements-docs.txt', '--without-hashes']
       - id: pdm-sync

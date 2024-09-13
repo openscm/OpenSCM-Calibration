@@ -8,15 +8,8 @@ authors = [
 license = {text = "BSD-3-Clause"}
 requires-python = ">=3.9"
 dependencies = [
-    "pandas",
     "attrs",
-    "pint",
-    # TODO: remove when addressing #26
-    "scmdata~=0.17",
-    # TODO: remove when addressing #26 ?
     "more-itertools~=10.5",
-    # TODO: remove when addressing #26 ?
-    "ipython",
 ]
 readme = "README.md"
 classifiers = [
@@ -25,9 +18,15 @@ classifiers = [
 
 [project.optional-dependencies]
 plots = [
-    "matplotlib>=3.7.1",
+    "ipython~=8.18",
+    "matplotlib~=3.7",
     "corner~=2.0",
     "seaborn~=0.13",
+]
+scmdata = [
+    "pandas~=2.2",
+    "pint~=0.24",
+    "scmdata~=0.17",
 ]
 
 [build-system]

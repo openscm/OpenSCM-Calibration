@@ -5,9 +5,10 @@ Storage class
 from __future__ import annotations
 
 from collections.abc import MutableSequence
-from typing import TYPE_CHECKING, Any, Generic, Protocol
+from typing import TYPE_CHECKING, Any, Callable, Generic, Protocol
 
 import numpy as np
+import scmdata.run
 from attrs import define, field
 
 from openscm_calibration.exceptions import (
@@ -156,11 +157,20 @@ class OptResStore(Generic[DataContainer]):
     )
     """Indices available to be written into"""
 
+    add_iteration_to_res: Callable[[DataContainer, int], DataContainer]
+    """
+    Add iteration information to the results of the run
+
+    This has to be done at run time, because we don't know the iteration in advance
+    (the iteration information comes from `self.get_available_index`).
+    """
+
     @classmethod
     def from_n_runs(
         cls,
         n_runs: int,
         params: tuple[str],
+        add_iteration_to_res: Callable[[DataContainer, int], DataContainer],
     ) -> OptResStore[Any]:
         """
         Initialise based on expected number of runs
@@ -172,6 +182,11 @@ class OptResStore(Generic[DataContainer]):
 
         params
             Names of the parameters that are being sampled
+
+        add_iteration_to_res
+            Function that adds iteration information to the result of a run.
+
+            For further information, see the docstring of `self`.
 
         Returns
         -------
@@ -186,6 +201,7 @@ class OptResStore(Generic[DataContainer]):
             x_samples=[None] * n_runs,
             params=params,
             available_indices=available_indices,
+            add_iteration_to_res=add_iteration_to_res,
         )
 
     @classmethod
@@ -194,6 +210,7 @@ class OptResStore(Generic[DataContainer]):
         n_runs: int,
         manager: SupportsListLikeHandling,
         params: tuple[str],
+        add_iteration_to_res: Callable[[DataContainer, int], DataContainer],
     ) -> OptResStore[Any]:
         """
         Initialise based on expected number of runs for use in parallel work
@@ -209,6 +226,11 @@ class OptResStore(Generic[DataContainer]):
         params
             Names of the parameters that are being sampled
 
+        add_iteration_to_res
+            Function that adds iteration information to the result of a run.
+
+            For further information, see the docstring of `self`.
+
         Returns
         -------
         :
@@ -223,6 +245,7 @@ class OptResStore(Generic[DataContainer]):
             x_samples=manager.list([None] * n_runs),
             params=params,
             available_indices=manager.list(available_indices),
+            add_iteration_to_res=add_iteration_to_res,
         )
 
     def get_available_index(self) -> int:
@@ -296,10 +319,10 @@ class OptResStore(Generic[DataContainer]):
         iteration = self.get_available_index()
         # res_keep = res.copy()
         # res_keep["it"] = iteration
+        res_keep = self.add_iteration_to_res(res, iteration)
 
         self.set_result_cost_x(
-            res=res,
-            # res=res_keep,
+            res=res_keep,
             cost=cost,
             x=x,
             idx=iteration,
@@ -407,3 +430,31 @@ class OptResStore(Generic[DataContainer]):
         out = (unlabelled[0], xs_labelled, unlabelled[2])
 
         return out
+
+
+def add_iteration_to_res_scmrun(
+    res: scmdata.run.BaseScmRun, iteration: int, iteration_metadata_column: str = "it"
+) -> scmdata.run.BaseScmRun:
+    """
+    Add iteration information to a result stored as [`scmdata.run.BaseScmRun`][]
+
+    Parameters
+    ----------
+    res
+        Result of the run
+
+    iteration
+        Iteration to assign to the run
+
+    iteration_metadata_column
+        Metadata column in which to store the iteration information
+
+    Returns
+    -------
+    :
+        Result with iteration information added.
+    """
+    out = res.copy()
+    out[iteration_metadata_column] = iteration
+
+    return out

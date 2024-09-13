@@ -798,7 +798,7 @@ starting point
 
 def plot_timeseries_scmrun(  # noqa: PLR0913,too-many-locals
     best_run: scmdata.run.BaseScmRun,
-    others_to_plot: scmdata.run.BaseScmRun,
+    others_to_plot: tuple[scmdata.run.BaseScmRun, ...],
     target: scmdata.run.BaseScmRun,
     convert_results_to_plot_dict: ResultsToDictConverter[scmdata.run.BaseScmRun],
     timeseries_keys: Iterable[str],
@@ -871,7 +871,7 @@ def plot_timeseries_scmrun(  # noqa: PLR0913,too-many-locals
         ylabel_kwargs = {}
 
     best_run_d = convert_results_to_plot_dict(best_run)
-    others_to_plot_d = convert_results_to_plot_dict(others_to_plot)
+    others_to_plot_d = convert_results_to_plot_dict(scmdata.run_append(others_to_plot))
     target_runs = convert_results_to_plot_dict(target)
 
     for k in timeseries_keys:
@@ -1082,7 +1082,7 @@ class CallbackProxy(Generic[DataContainer]):
         self.progress_bar.update(n_model_calls - self.progress_bar.last_print_n)
 
 
-def convert_target_to_model_output_units(
+def convert_target_to_model_output_units_scmrun(
     *,
     target: scmdata.run.BaseScmRun,
     model_output: scmdata.run.BaseScmRun,

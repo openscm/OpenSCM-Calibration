@@ -22,7 +22,7 @@ from openscm_calibration.scipy_plotting import (
     CallbackProxy,
     NoSuccessfulRunsError,
     OptPlotter,
-    convert_target_to_model_output_units,
+    convert_target_to_model_output_units_scmrun,
     get_optimisation_mosaic,
     get_runs_to_plot,
     get_ymax_default,
@@ -547,10 +547,16 @@ def test_plot_parameters(alpha, alpha_exp, extra_kwargs, extra_kwargs_exp):
 @pytest.mark.parametrize("exp_warn", (True, False))
 @pytest.mark.parametrize("others_empty", (True, False))
 @pytest.mark.parametrize(
-    "background_ts_kwargs, background_ts_kwargs_exp, "
-    "target_ts_kwargs, target_ts_kwargs_exp, "
-    "best_ts_kwargs, best_ts_kwargs_exp, "
-    "ylabel_kwargs, ylabel_kwargs_exp",
+    [
+        "background_ts_kwargs",
+        "background_ts_kwargs_exp",
+        "target_ts_kwargs",
+        "target_ts_kwargs_exp",
+        "best_ts_kwargs",
+        "best_ts_kwargs_exp",
+        "ylabel_kwargs",
+        "ylabel_kwargs_exp",
+    ],
     (
         (
             None,
@@ -574,7 +580,9 @@ def test_plot_parameters(alpha, alpha_exp, extra_kwargs, extra_kwargs_exp):
         ),
     ),
 )
+@patch("openscm_calibration.scipy_plotting.scmdata")
 def test_plot_timeseries(  # noqa: PLR0913
+    mock_scmdata,
     exp_warn,
     others_empty,
     background_ts_kwargs,
@@ -598,6 +606,7 @@ def test_plot_timeseries(  # noqa: PLR0913
     axes = {"a": Mock(), "b": Mock()}
     mock_get_timeseries_return = Mock()
     get_timeseries = Mock(return_value=mock_get_timeseries_return)
+    mock_scmdata.run_append = lambda x: x
 
     # Setup
     def _get_scmrun_mock(name, unit, empty=False):
@@ -930,7 +939,7 @@ def test_convert_target_to_model_output_units():
 
     convert_scmrun_to_plot_dict = partial(scmrun_as_dict, groups=("variable",))
 
-    res = convert_target_to_model_output_units(
+    res = convert_target_to_model_output_units_scmrun(
         target=target,
         model_output=sample,
         convert_results_to_plot_dict=convert_scmrun_to_plot_dict,

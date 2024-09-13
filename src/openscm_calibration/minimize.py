@@ -7,20 +7,24 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Protocol
 
 import numpy as np
-import scmdata.run
 
 from openscm_calibration.store import OptResStore
+from openscm_calibration.typing import (
+    DataContainer,
+    DataContainer_co,
+    DataContainer_contra,
+)
 
 if TYPE_CHECKING:
     from typing import Any
 
 
-class SupportsCostCalculation(Protocol):
+class SupportsCostCalculation(Protocol[DataContainer_contra]):
     """
     Class that supports cost calculations
     """
 
-    def calculate_cost(self, model_results: scmdata.run.BaseScmRun) -> float:
+    def calculate_cost(self, model_results: DataContainer_contra) -> float:
         """
         Calculate cost function
 
@@ -31,11 +35,12 @@ class SupportsCostCalculation(Protocol):
 
         Returns
         -------
+        :
             Cost function value
         """
 
 
-class SupportsModelRun(Protocol):
+class SupportsModelRun(Protocol[DataContainer_co]):
     """
     Class that supports model runs
     """
@@ -43,7 +48,7 @@ class SupportsModelRun(Protocol):
     def run_model(
         self,
         x: np.typing.NDArray[np.number[Any]],
-    ) -> scmdata.run.BaseScmRun:
+    ) -> DataContainer_co:
         """
         Calculate cost function
 
@@ -54,15 +59,16 @@ class SupportsModelRun(Protocol):
 
         Returns
         -------
-            results of model run
+        :
+            Results of model run
         """
 
 
 def to_minimize_full(
     x: np.typing.NDArray[np.number[Any]],
-    cost_calculator: SupportsCostCalculation,
-    model_runner: SupportsModelRun,
-    store: OptResStore | None = None,
+    cost_calculator: SupportsCostCalculation[DataContainer],
+    model_runner: SupportsModelRun[DataContainer],
+    store: OptResStore[DataContainer] | None = None,
     known_error: type[ValueError] | None = None,
 ) -> float:
     """

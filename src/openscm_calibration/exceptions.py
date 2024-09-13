@@ -5,10 +5,9 @@ Exceptions that are used throughout
 from __future__ import annotations
 
 from collections.abc import Sequence
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
-if TYPE_CHECKING:
-    import pandas as pd
+import pandas as pd
 
 
 class MissingRequiredDependencyError(ImportError):
@@ -143,7 +142,7 @@ class MissingValueError(ValueError):
 
 class AlignmentError(ValueError):
     """
-    Raised when two [pd.DataFrame][] do not align smoothly
+    Raised when two [`pandas.DataFrame`][pandas.DataFrame] do not align smoothly
     """
 
     def __init__(  # noqa: PLR0913

@@ -11,8 +11,8 @@ import pytest
 import scmdata.run
 import scmdata.testing
 
-from openscm_calibration.cost import OptCostCalculatorSSE
-from openscm_calibration.exceptions import AlignmentError, MissingValueError
+from openscm_calibration.cost.scmdata import AlignmentError, OptCostCalculatorSSE
+from openscm_calibration.exceptions import MissingValueError
 
 
 @pytest.fixture()

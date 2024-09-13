@@ -1,20 +1,67 @@
 """
-Calculate cost of model results
+Cost calculations for models that return [`scmdata.run.BaseScmRun`][] objects
 """
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
 from attrs import define, field
 
-from openscm_calibration.exceptions import AlignmentError, MissingValueError
+from openscm_calibration.exceptions import MissingValueError
 
 if TYPE_CHECKING:
     import attr
     import pandas as pd
     import scmdata.run
+
+
+class AlignmentError(ValueError):
+    """
+    Raised when our data's metadata does not align as expected
+    """
+
+    def __init__(  # noqa: PLR0913
+        self,
+        name_left: str,
+        val_left: pd.DataFrame | pd.Series[Any],
+        name_right: str,
+        val_right: pd.DataFrame | pd.Series[Any],
+        extra_context: str | None = None,
+    ) -> None:
+        """
+        Initialise the error
+
+        Parameters
+        ----------
+        name_left
+            The name of the first thing being referenced
+            (variable, attribute etc.)
+
+        val_left
+            The values referred to by ``name_left``
+
+        name_right
+            The name of the other thing being referenced (variable, attribute
+            etc.)
+
+        name_right
+            The values referred to by ``name_left``
+
+        extra_context
+            Any extra context to include in the message
+        """
+        error_msg = (
+            f"Please check.\n"
+            f"{name_left}:\n{val_left}\n"
+            f"{name_right}:\n{val_right}\n"
+        )
+
+        if extra_context:
+            error_msg = f"{extra_context}. {error_msg}"
+
+        super().__init__(error_msg)
 
 
 def _works_with_self_target(
@@ -59,8 +106,9 @@ class OptCostCalculatorSSE:
     """
     Cost calculator based on sum of squared errors
 
-    This is a convenience class. We may want to refactor it in future to
-    provide greater flexibility for other cost calculations.
+    This is a convenience class.
+    We may want to refactor it in future
+    to provide greater flexibility for other cost calculations.
     """
 
     target: scmdata.run.BaseScmRun

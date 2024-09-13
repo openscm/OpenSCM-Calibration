@@ -71,7 +71,7 @@ class OptModelRunner:
     Generator of inputs for ``do_model_runs``
 
     More specifically, the callable used to translate the parameters
-    (already converted to [`pint.Quantity`][pint.Quantity])
+    (already converted to [`pint.Quantity`][])
     into the keyword arguments required by `self.do_model_runs`.
     """
 
@@ -174,12 +174,12 @@ def x_and_parameters_to_named_with_units(
         This allows the user to do a delayed import of the unit registry,
         which is important because pint's unit registries don't parallelise well.
 
-        If not provided, [`openscm_units.unit_registry`][openscm_units.unit_registry] is used.
+        If not provided, [`openscm_units.unit_registry`][] is used.
 
     Returns
     -------
     :
-        Parameters, named and converted to [`pint.Quantity`][pint.Quantity]
+        Parameters, named and converted to [`pint.Quantity`][]
         where appropriate
 
     Examples

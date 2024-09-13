@@ -127,7 +127,7 @@ class NoSuccessfulRunsError(ValueError):
     """
 
 
-class PlotCostsLike(Protocol[DataContainer]):
+class PlotCostsLike:
     """
     Callable that supports plotting costs
     """
@@ -171,7 +171,7 @@ class PlotCostsLike(Protocol[DataContainer]):
         """
 
 
-class PlotParametersLike(Protocol[DataContainer]):
+class PlotParametersLike:
     """
     Callable that supports plotting parameters
     """
@@ -214,7 +214,7 @@ class PlotTimeseriesLike(Protocol[DataContainer]):
     def __call__(  # noqa: PLR0913
         self,
         best_run: DataContainer,
-        others_to_plot: DataContainer,
+        others_to_plot: tuple[DataContainer, ...],
         target: DataContainer,
         convert_results_to_plot_dict: ResultsToDictConverter[DataContainer],
         timeseries_keys: Iterable[str],
@@ -378,17 +378,17 @@ class OptPlotter(Generic[DataContainer]):
     must match the values in `timeseries_axes`.
     """
 
-    convert_results_to_plot_dict: ResultsToDictConverter[DataContainer]
-    """
-    Callable which converts results into a dictionary
-    in which the keys are a subset of the values in `timeseries_axes`
-    """
-
     target: DataContainer
     """Target used for optimisation"""
 
     store: OptResStore[DataContainer]
     """Optimisation result store"""
+
+    convert_results_to_plot_dict: ResultsToDictConverter[DataContainer]
+    """
+    Callable which converts results into a dictionary
+    in which the keys are a subset of the values in `timeseries_axes`
+    """
 
     get_timeseries: Callable[[DataContainer], pd.DataFrame]
     """
@@ -560,16 +560,23 @@ class OptPlotter(Generic[DataContainer]):
         ax_cost = self.axes[self.cost_key]
         ax_cost.clear()
 
-        self.plot_costs(ax=ax_cost, ylabel=self.cost_key, costs=costs)
+        if self.plot_costs is None:
+            plot_costs_h = plot_costs
+        else:
+            plot_costs_h = self.plot_costs
+
+        plot_costs_h(ax=ax_cost, ylabel=self.cost_key, costs=costs)
 
         # plot parameters
         for parameter in self.parameters:
             self.axes[parameter].clear()
 
-        self.plot_parameters(
-            axes=self.axes,
-            para_vals=para_vals,
-        )
+        if self.plot_parameters is None:
+            plot_parameters_h = plot_parameters
+        else:
+            plot_parameters_h = self.plot_parameters
+
+        plot_parameters_h(axes=self.axes, para_vals=para_vals)
 
         # plot timeseries
         best_run, others_to_plot = get_runs_to_plot(costs, res, self.thin_ts_to_plot)
@@ -592,29 +599,26 @@ class OptPlotter(Generic[DataContainer]):
         self.holder.update(self.fig)
 
 
-# TODO: re-think this, best option may be to remove the default
-def get_timeseries_default(
+def get_timeseries_scmrun(
     inp: scmdata.run.BaseScmRun,
     time_axis: str = "year-month",
 ) -> pd.DataFrame:
     """
-    Get timeseries for plotting from an :obj:`scmdata.run.BaseScmRun`
-
-    This is the default function for doing this conversion in this module
+    Get timeseries for plotting from an [`scmdata.run.BaseScmRun`][]
 
     Parameters
     ----------
     inp
-        :obj:`scmdata.run.BaseScmRun` to convert
+        Object to convert
 
     time_axis
-        Passed to :meth:`inp.timeseries` when doing the
-        conversion
+        Passed to [`inp.timeseries`] when doing the conversion
 
     Returns
     -------
-        Data with the time axis as rows, ready for simplified plotting using
-        panda's plotting methods.
+    :
+        Data with the time axis as rows,
+        ready for simplified plotting using panda's plotting methods.
     """
     return inp.timeseries(time_axis=time_axis).T
 
@@ -915,7 +919,7 @@ def get_runs_to_plot(
     costs: tuple[float, ...],
     res: tuple[DataContainer, ...],
     thin_ts_to_plot: int,
-) -> tuple[DataContainer, DataContainer]:
+) -> tuple[DataContainer, tuple[DataContainer, ...]]:
     """
     Get runs to plot
 
@@ -944,7 +948,7 @@ def get_runs_to_plot(
     Returns
     -------
     :
-        Best iteration and then other runs to plot
+        Best iteration and other runs to plot
 
     Raises
     ------
@@ -966,13 +970,13 @@ def get_runs_to_plot(
     if best_it in to_plot_not_best:
         to_plot_not_best.remove(best_it)
 
-    out_not_best = [res_d_success[i] for i in to_plot_not_best]
+    out_not_best = tuple([res_d_success[i] for i in to_plot_not_best])
 
     return out_best, out_not_best
 
 
 @define
-class CallbackProxy:
+class CallbackProxy(Generic[DataContainer]):
     """
     Callback helper
 
@@ -984,7 +988,7 @@ class CallbackProxy:
     real_callback: SupportsScipyOptCallback
     """Callback to be called if a sufficient number of runs have been done"""
 
-    store: OptResStore
+    store: OptResStore[DataContainer]
     """Optimisation result store"""
 
     last_callback_val: int = 0
@@ -1082,13 +1086,13 @@ def convert_target_to_model_output_units(
     *,
     target: scmdata.run.BaseScmRun,
     model_output: scmdata.run.BaseScmRun,
-    convert_results_to_plot_dict: ResultsToDictConverter,
+    convert_results_to_plot_dict: ResultsToDictConverter[scmdata.run.BaseScmRun],
 ) -> scmdata.run.BaseScmRun:
     """
     Convert the target data to the model output's units
 
-    This is a helper function that allows the data to be lined up before
-    setting up plotting etc.
+    This is a helper function
+    that allows the data to be lined up before setting up plotting etc.
 
     Parameters
     ----------
@@ -1100,10 +1104,11 @@ def convert_target_to_model_output_units(
 
     convert_results_to_plot_dict
         The function that will be used to convert
-        :obj:`scmdata.run.BaseScmRun` to a dictionary when doing the plotting
+        [`scmdata.run.BaseScmRun`][] to a dictionary when doing the plotting.
 
     Returns
     -------
+    :
         Target data with units that match the model output
     """
     target_d = convert_results_to_plot_dict(target)

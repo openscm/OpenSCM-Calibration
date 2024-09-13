@@ -5,7 +5,7 @@
 groups = ["default", "dev", "docs", "notebooks", "plots", "test", "tests"]
 strategy = ["inherit_metadata"]
 lock_version = "4.5.0"
-content_hash = "sha256:84b87a208d12db57635bea6a91726faeb9c58c64189cc2ec26cef32ccc63b656"
+content_hash = "sha256:1b80dc7e9e5e5b2c0119c61688736e3f21b9ef35df781f0cea14b63bbf84986e"
 
 [[metadata.targets]]
 requires_python = ">=3.9"
@@ -981,7 +981,7 @@ name = "h5py"
 version = "3.11.0"
 requires_python = ">=3.8"
 summary = "Read and write HDF5 files from Python"
-groups = ["notebooks"]
+groups = ["docs", "notebooks"]
 dependencies = [
     "numpy>=1.17.3",
 ]
@@ -1157,7 +1157,7 @@ name = "ipywidgets"
 version = "8.1.5"
 requires_python = ">=3.7"
 summary = "Jupyter interactive widgets"
-groups = ["notebooks"]
+groups = ["docs", "notebooks"]
 dependencies = [
     "comm>=0.1.3",
     "ipython>=6.1.0",
@@ -1474,7 +1474,7 @@ name = "jupyterlab-widgets"
 version = "3.0.13"
 requires_python = ">=3.7"
 summary = "Jupyter interactive widgets for JupyterLab"
-groups = ["notebooks"]
+groups = ["docs", "notebooks"]
 files = [
     {file = "jupyterlab_widgets-3.0.13-py3-none-any.whl", hash = "sha256:e3cda2c233ce144192f1e29914ad522b2f4c40e77214b0cc97377ca3d323db54"},
     {file = "jupyterlab_widgets-3.0.13.tar.gz", hash = "sha256:a2966d385328c1942b683a8cd96b89b8dd82c8b8f81dda902bb2bc06d46f5bed"},
@@ -2210,7 +2210,7 @@ name = "numpy"
 version = "2.0.2"
 requires_python = ">=3.9"
 summary = "Fundamental package for array computing in Python"
-groups = ["default", "dev", "notebooks", "plots", "tests"]
+groups = ["default", "dev", "docs", "notebooks", "plots", "tests"]
 files = [
     {file = "numpy-2.0.2-cp310-cp310-macosx_10_9_x86_64.whl", hash = "sha256:51129a29dbe56f9ca83438b706e2e69a39892b5eda6cedcb6b0c9fdc9b0d3ece"},
     {file = "numpy-2.0.2-cp310-cp310-macosx_11_0_arm64.whl", hash = "sha256:f15975dfec0cf2239224d80e32c3170b1d168335eaedee69da84fbe9f1f9cd04"},
@@ -3203,7 +3203,7 @@ name = "scipy"
 version = "1.13.1"
 requires_python = ">=3.9"
 summary = "Fundamental algorithms for scientific computing in Python"
-groups = ["notebooks"]
+groups = ["docs", "notebooks"]
 dependencies = [
     "numpy<2.3,>=1.22.4",
 ]
@@ -3486,13 +3486,13 @@ files = [
 
 [[package]]
 name = "types-pytz"
-version = "2024.1.0.20240417"
+version = "2024.2.0.20240913"
 requires_python = ">=3.8"
 summary = "Typing stubs for pytz"
 groups = ["dev"]
 files = [
-    {file = "types-pytz-2024.1.0.20240417.tar.gz", hash = "sha256:6810c8a1f68f21fdf0f4f374a432487c77645a0ac0b31de4bf4690cf21ad3981"},
-    {file = "types_pytz-2024.1.0.20240417-py3-none-any.whl", hash = "sha256:8335d443310e2db7b74e007414e74c4f53b67452c0cb0d228ca359ccfba59659"},
+    {file = "types-pytz-2024.2.0.20240913.tar.gz", hash = "sha256:4433b5df4a6fc587bbed41716d86a5ba5d832b4378e506f40d34bc9c81df2c24"},
+    {file = "types_pytz-2024.2.0.20240913-py3-none-any.whl", hash = "sha256:a1eebf57ebc6e127a99d2fa2ba0a88d2b173784ef9b3defcc2004ab6855a44df"},
 ]
 
 [[package]]
@@ -3672,7 +3672,7 @@ name = "widgetsnbextension"
 version = "4.0.13"
 requires_python = ">=3.7"
 summary = "Jupyter interactive widgets for Jupyter Notebook"
-groups = ["notebooks"]
+groups = ["docs", "notebooks"]
 files = [
     {file = "widgetsnbextension-4.0.13-py3-none-any.whl", hash = "sha256:74b2692e8500525cc38c2b877236ba51d34541e6385eeed5aec15a70f88a6c71"},
     {file = "widgetsnbextension-4.0.13.tar.gz", hash = "sha256:ffcb67bc9febd10234a362795f643927f4e0c05d9342c727b65d2384f8feacb6"},

@@ -5,7 +5,7 @@ Storage class
 from __future__ import annotations
 
 from collections.abc import MutableSequence
-from typing import TYPE_CHECKING, Any, Protocol
+from typing import TYPE_CHECKING, Any, Generic, Protocol
 
 import numpy as np
 from attrs import define, field
@@ -15,10 +15,10 @@ from openscm_calibration.exceptions import (
     NotExpectedAllSameValueError,
     NotExpectedValueError,
 )
+from openscm_calibration.typing import DataContainer
 
 if TYPE_CHECKING:
     import attr
-    import scmdata.run
 
 
 class SupportsListLikeHandling(Protocol):
@@ -33,12 +33,12 @@ class SupportsListLikeHandling(Protocol):
 
 
 def _all_none_to_start(
-    instance: OptResStore,
+    instance: OptResStore[Any],
     attribute: attr.Attribute[MutableSequence[Any]],
     value: MutableSequence[Any],
 ) -> None:
     """
-    Check all values are ``None``
+    Check all values are `None`
 
     Parameters
     ----------
@@ -54,7 +54,7 @@ def _all_none_to_start(
     Raises
     ------
     ValueError
-        Not all elements in ``value`` are ``None``
+        Not all elements in `value` are `None`
     """
     expected_val = None
     if not all(v is expected_val for v in value):
@@ -62,12 +62,12 @@ def _all_none_to_start(
 
 
 def _same_length_as_res(
-    instance: OptResStore,
+    instance: OptResStore[Any],
     attribute: attr.Attribute[MutableSequence[Any]],
     value: MutableSequence[Any],
 ) -> None:
     """
-    Check ``value`` has same length as ``instance.res``
+    Check `value` has same length as `instance.res`
 
     Parameters
     ----------
@@ -83,7 +83,7 @@ def _same_length_as_res(
     Raises
     ------
     ValueError
-        ``value`` does not have the same length as ``instance.res``
+        `value` does not have the same length as `instance.res`
     """
     length_val = len(value)
     length_res = len(instance.res)
@@ -97,12 +97,12 @@ def _same_length_as_res(
 
 
 def _contains_indices_in_res(
-    instance: OptResStore,
+    instance: OptResStore[Any],
     attribute: attr.Attribute[MutableSequence[int]],
     value: MutableSequence[int],
 ) -> None:
     """
-    Check ``value`` has indices that line up with ``instance.res``
+    Check `value` has indices that line up with `instance.res`
 
     Parameters
     ----------
@@ -118,7 +118,7 @@ def _contains_indices_in_res(
     Raises
     ------
     ValueError
-        ``value`` does not have indices that line up with ``instance.res``
+        `value` does not have indices that line up with `instance.res`
     """
     exp_indices = list(range(len(instance.res)))
     if list(sorted(value)) != exp_indices:
@@ -130,14 +130,12 @@ def _contains_indices_in_res(
 
 
 @define
-class OptResStore:
+class OptResStore(Generic[DataContainer]):
     """
     Store for results during optimisation
     """
 
-    res: MutableSequence[None | scmdata.run.BaseScmRun] = field(
-        validator=[_all_none_to_start]
-    )
+    res: MutableSequence[None | DataContainer] = field(validator=[_all_none_to_start])
     """Results of runs"""
 
     costs: MutableSequence[None | float] = field(
@@ -163,7 +161,7 @@ class OptResStore:
         cls,
         n_runs: int,
         params: tuple[str],
-    ) -> OptResStore:
+    ) -> OptResStore[Any]:
         """
         Initialise based on expected number of runs
 
@@ -177,6 +175,7 @@ class OptResStore:
 
         Returns
         -------
+        :
             Initialised store
         """
         # Reverse so that using pop counts up
@@ -195,7 +194,7 @@ class OptResStore:
         n_runs: int,
         manager: SupportsListLikeHandling,
         params: tuple[str],
-    ) -> OptResStore:
+    ) -> OptResStore[Any]:
         """
         Initialise based on expected number of runs for use in parallel work
 
@@ -212,6 +211,7 @@ class OptResStore:
 
         Returns
         -------
+        :
             Initialised store
         """
         # Reverse so that using pop counts up
@@ -237,7 +237,7 @@ class OptResStore:
 
     def set_result_cost_x(
         self,
-        res: None | scmdata.run.BaseScmRun,
+        res: None | DataContainer,
         cost: float,
         x: np.typing.NDArray[np.number[Any]],
         idx: int,
@@ -275,7 +275,7 @@ class OptResStore:
 
     def append_result_cost_x(
         self,
-        res: scmdata.run.BaseScmRun,
+        res: DataContainer,
         cost: float,
         x: np.typing.NDArray[np.number[Any]],
     ) -> None:
@@ -294,11 +294,12 @@ class OptResStore:
             Parameter array associated with the run
         """
         iteration = self.get_available_index()
-        res_keep = res.copy()
-        res_keep["it"] = iteration
+        # res_keep = res.copy()
+        # res_keep["it"] = iteration
 
         self.set_result_cost_x(
-            res=res_keep,
+            res=res,
+            # res=res_keep,
             cost=cost,
             x=x,
             idx=iteration,
@@ -338,15 +339,16 @@ class OptResStore:
     ) -> tuple[
         tuple[float, ...],
         tuple[np.typing.NDArray[np.number[Any]], ...],
-        tuple[scmdata.run.BaseScmRun, ...],
+        tuple[DataContainer, ...],
     ]:
         """
         Get costs, x_samples and res from runs
 
         Returns
         -------
-            Costs, x_samples and res from all runs which were attempted (i.e. we
-            include failed runs here)
+        :
+            Costs, x_samples and res from all runs which were attempted
+            (i.e. we include failed runs here)
         """
         # There may be a better algorithm for this, PRs welcome :)
         if all(x is None for x in self.x_samples):
@@ -370,7 +372,7 @@ class OptResStore:
         # Help out type hinting
         costs: tuple[float, ...] = tmp[0]
         xs_out: tuple[np.typing.NDArray[np.number[Any]], ...] = tmp[1]
-        ress: tuple[scmdata.run.BaseScmRun, ...] = tmp[2]
+        ress: tuple[DataContainer, ...] = tmp[2]
 
         out = (costs, xs_out, ress)
 
@@ -381,7 +383,7 @@ class OptResStore:
     ) -> tuple[
         tuple[float, ...],
         dict[str, np.typing.NDArray[np.number[Any]]],
-        tuple[scmdata.run.BaseScmRun, ...],
+        tuple[DataContainer, ...],
     ]:
         """
         Get costs, x_samples and res from runs

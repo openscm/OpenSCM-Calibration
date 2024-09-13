@@ -6,12 +6,14 @@ from __future__ import annotations
 
 from collections.abc import Iterable
 from functools import partial
-from typing import Any, Callable, Protocol
+from typing import Any, Callable, Generic, Protocol
 
 import numpy as np
 import openscm_units
 import pint
 from attrs import define
+
+from openscm_calibration.typing import DataContainer_co
 
 
 class XToNamedPintConvertor(Protocol):
@@ -39,19 +41,19 @@ class ModelRunsInputGenerator(Protocol):
         """
 
 
-class ModelRunner(Protocol):
+class ModelRunner(Protocol[DataContainer_co]):
     """
     Callable that supports running the model
     """
 
-    def __call__(self, **kwargs: Any) -> Any:
+    def __call__(self, **kwargs: Any) -> DataContainer_co:
         """
         Run the model
         """
 
 
 @define
-class OptModelRunner:
+class OptModelRunner(Generic[DataContainer_co]):
     """
     Model runner used during optimisation
     """
@@ -75,7 +77,7 @@ class OptModelRunner:
     into the keyword arguments required by `self.do_model_runs`.
     """
 
-    do_model_runs: ModelRunner
+    do_model_runs: ModelRunner[DataContainer_co]
     """
     Function that runs the model
 
@@ -88,8 +90,8 @@ class OptModelRunner:
         cls,
         params: Iterable[tuple[str, str | pint.Unit | None]],
         do_model_runs_input_generator: ModelRunsInputGenerator,
-        do_model_runs: ModelRunner,
-    ) -> OptModelRunner:
+        do_model_runs: ModelRunner[DataContainer_co],
+    ) -> OptModelRunner[DataContainer_co]:
         """
         Initialise from list of parameters
 

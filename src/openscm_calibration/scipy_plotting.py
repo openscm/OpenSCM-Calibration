@@ -11,18 +11,22 @@ from typing import (
     TYPE_CHECKING,
     Any,
     Callable,
+    Generic,
     Protocol,
 )
 
+import matplotlib.axes
 import more_itertools
 import numpy as np
 import pandas as pd
 import scmdata
 import scmdata.run
 from attrs import define, field
+from typing_extensions import TypeAlias
 
 from openscm_calibration.exceptions import MissingValueError
 from openscm_calibration.matplotlib_utils import get_fig_axes_holder_from_mosaic
+from openscm_calibration.typing import DataContainer
 
 if TYPE_CHECKING:
     import attr
@@ -48,7 +52,7 @@ class SupportsScipyOptCallback(Protocol):
         """
         Get cost of parameter vector
 
-        This callback is intended to be used with `scipy.optimize.minimize`
+        This callback is intended to be used with [`scipy.optimize.minimize`][]
 
         Parameters
         ----------
@@ -65,7 +69,7 @@ class SupportsScipyOptCallback(Protocol):
         Get cost of parameter vector
 
         This callback is intended to be used with
-        `scipy.optimize.differential_evolution`
+        [`scipy.optimize.differential_evolution`][]
 
         Parameters
         ----------
@@ -73,8 +77,8 @@ class SupportsScipyOptCallback(Protocol):
             Parameter vector with best solution found so far
 
         convergence
-            Received from :func:`scipy.optimize.differential_evolution`
-            on callback. We are not sure what this does is or is used for.
+            Received from [`scipy.optimize.differential_evolution`][] on callback.
+            We are not sure what this does is or is used for.
         """
 
 
@@ -82,7 +86,7 @@ class SupportsFigUpdate(Protocol):
     """
     Class that supports updating figures
 
-    For example, :class:`IPython.core.display_functions.DisplayHandle`
+    For example, [`IPython.core.display_functions.DisplayHandle`][]
     """
 
     def update(
@@ -103,18 +107,17 @@ class SupportsFigUpdate(Protocol):
 
         Returns
         -------
+        :
             Anything (not used)
         """
 
 
-ScmRunToDictConverter = Callable[
-    [scmdata.run.BaseScmRun], dict[str, scmdata.run.BaseScmRun]
-]
+ResultsToDictConverter: TypeAlias = Callable[[DataContainer], dict[str, DataContainer]]
 """
-Type hint helper for functions used as ``convert_scmrun_to_plot_dict``
+Callable used to convert results into a dictionary
 
-Such functions convert an :obj:`scmdata.run.BaseScmRun` to a dictionary of
-:obj:`scmdata.run.BaseScmRun`
+This allows us to know which results to plot on which axes
+(the keys of the resulting dictionary should match the names of the axes).
 """
 
 
@@ -124,13 +127,137 @@ class NoSuccessfulRunsError(ValueError):
     """
 
 
+class PlotCostsLike(Protocol[DataContainer]):
+    """
+    Callable that supports plotting costs
+    """
+
+    def __call__(  # noqa: PLR0913
+        self,
+        ax: matplotlib.axes.Axes,
+        ylabel: str,
+        costs: tuple[float, ...],
+        ymin: float = 0.0,
+        get_ymax: Callable[[tuple[float, ...]], float] | None = None,
+        alpha: float = 0.7,
+        **kwargs: Any,
+    ) -> None:
+        r"""
+        Plot cost function
+
+        Parameters
+        ----------
+        ax
+            Axes on which to plot
+
+        ylabel
+            y-axis label
+
+        costs
+            Costs to plot
+
+        ymin
+            Minimum y-axis value
+
+        get_ymax
+            Function which gets the y-max based on the costs. If not provided,
+            :func:`get_ymax_default` is used
+
+        alpha
+            Alpha to apply to plotted points
+
+        **kwargs
+            Passed to :meth:`ax.scatter`
+        """
+
+
+class PlotParametersLike(Protocol[DataContainer]):
+    """
+    Callable that supports plotting parameters
+    """
+
+    def __call__(
+        self,
+        axes: dict[str, matplotlib.axes.Axes],
+        para_vals: dict[str, np.typing.NDArray[np.number[Any]]],
+        alpha: float = 0.7,
+        **kwargs: Any,
+    ) -> None:
+        """
+        Plot parameters
+
+        Parameters
+        ----------
+        axes
+            Axes on which to plot.
+
+            The keys should match the keys in `para_vals`.
+
+        para_vals
+            Parameter values.
+
+            Each key should be the name of a parameter.
+
+        alpha
+            Alpha to use when calling [`matplotlib.axes.Axes.scatter`][].
+
+        **kwargs
+            Passed to each call to [`matplotlib.axes.Axes.scatter`][].
+        """
+
+
+class PlotTimeseriesLike(Protocol[DataContainer]):
+    """
+    Callable that supports plotting timeseries
+    """
+
+    def __call__(  # noqa: PLR0913
+        self,
+        best_run: DataContainer,
+        others_to_plot: DataContainer,
+        target: DataContainer,
+        convert_results_to_plot_dict: ResultsToDictConverter[DataContainer],
+        timeseries_keys: Iterable[str],
+        axes: dict[str, matplotlib.axes.Axes],
+        get_timeseries: Callable[[DataContainer], pd.DataFrame],
+    ) -> None:
+        """
+        Plot timeseries
+
+        Parameters
+        ----------
+        best_run
+            Best run from iterations
+
+        others_to_plot
+            Other results to plot from iterations
+
+        target
+            Target timeseries
+
+        convert_results_to_plot_dict
+            Callable which converts the data into a dictionary
+            in which the keys are a subset of the values in `axes`
+
+        timeseries_keys
+            Keys of the timeseries to plot
+
+        axes
+            Axes on which to plot
+
+        get_timeseries
+            Function which converts the data into a
+            [`pandas.DataFrame`][] for plotting
+        """
+
+
 def _all_in_axes(
-    instance: OptPlotter,
+    instance: OptPlotter[Any],
     attribute: attr.Attribute[tuple[str]],
     value: tuple[str],
 ) -> None:
     """
-    Check all values are present in ``self.axes``
+    Check all values are present in `self.axes`
 
     Parameters
     ----------
@@ -146,7 +273,7 @@ def _all_in_axes(
     Raises
     ------
     ValueError
-        Not all elements in ``value`` are keys in ``self.axes``
+        Not all elements in `value` are keys in `self.axes`
     """
     values_without_axes = [k for k in value if k not in instance.axes]
     if values_without_axes:
@@ -158,15 +285,15 @@ def _all_in_axes(
 
 
 def _compatible_with_convert_and_target(
-    instance: OptPlotter,
+    instance: OptPlotter[Any],
     attribute: attr.Attribute[tuple[str]],
     value: tuple[str],
 ) -> None:
     """
-    Check that the values are compatible with the target and the ScmRun conversion
+    Check that the values are compatible with the target and the results conversion
 
-    Specifically, compatible with ``self.target`` and
-    ``self.convert_scmrun_to_plot_dict``
+    Specifically, compatible with `self.target`
+    and `self.convert_results_to_plot_dict`
 
     Parameters
     ----------
@@ -182,11 +309,11 @@ def _compatible_with_convert_and_target(
     Raises
     ------
     ValueError
-        If the values in ``value`` are not all keys in the dictionary that is
-        returned when ``self.convert_scmrun_to_plot_dict`` is applied to
-        ``self.target``.
+        If the values in `value` are not all keys in the dictionary
+        that is returned when `self.convert_results_to_plot_dict`
+        is applied to `self.target`.
     """
-    target_converted = instance.convert_scmrun_to_plot_dict(instance.target)
+    target_converted = instance.convert_results_to_plot_dict(instance.target)
     missing_from_target_converted = [k for k in value if k not in target_converted]
     if missing_from_target_converted:
         raise MissingValueError(
@@ -197,18 +324,18 @@ def _compatible_with_convert_and_target(
 
 
 @define
-class OptPlotter:
+class OptPlotter(Generic[DataContainer]):
     """
     Optimisation progress plotting helper
 
-    This class is an adapter between interfaces required by Scipy's callback
-    arguments and updating the plots. The class holds all the information
-    required to make useful plots. It is intended to be used in interactive
-    Python i.e. to make updating plots.
+    This class is an adapter between interfaces required by Scipy's callback arguments
+    and updating the plots.
+    The class holds all the information required to make useful plots.
+    It is intended to be used in interactive Python i.e. to make updating plots.
     """
 
     holder: SupportsFigUpdate
-    """Figure updater, typically :obj:`IPython.core.display_functions.DisplayHandle`"""
+    """Figure updater, typically [`IPython.core.display_functions.DisplayHandle`][]"""
 
     fig: matplotlib.figure.Figure
     """Figure on which to plot"""
@@ -217,15 +344,14 @@ class OptPlotter:
     """
     Dictionary storing axes on which to plot
 
-    The plot of the cost function over time will be plotted on the axes with
-    key given by ``cost_key``.
+    The plot of the cost function over time will be plotted on the axes
+    with key given by `cost_key`.
 
-    Each parameter will be plotted on the axes with the same key as the
-    parameter (as defined in ``parameters``)
+    Each parameter will be plotted on the axes with the same key as the parameter
+    (as defined in `parameters`).
 
-    The timeseries will be plotted on the axes specified by
-    ``timeseries_axes``. See docstring of ``timeseries_axes`` for rules about
-    its values.
+    The timeseries will be plotted on the axes specified by `timeseries_axes`.
+    See docstring of `timeseries_axes` for rules about its values.
     """
 
     cost_key: str
@@ -235,9 +361,9 @@ class OptPlotter:
     """
     Parameters to be optimised
 
-    This must match the order in which the parameters are handled by the
-    optimiser i.e. it is used to translate the unlabeled array of parameter
-    values onto the desired axes.
+    This must match the order in which the parameters are handled by the optimiser,
+    i.e. it is used to translate the unlabeled array of parameter values
+    onto the desired axes.
     """
 
     timeseries_axes: tuple[str, ...] = field(
@@ -246,51 +372,56 @@ class OptPlotter:
     """
     Axes on which to plot timeseries
 
-    The timeseries in ``target`` and ``store.res`` are
-    converted into dictionaries using ``convert_scmrun_to_plot_dict``. The
-    keys of the result of ``convert_scmrun_to_plot_dict`` must match the
-    values in ``timeseries_axes``.
+    The timeseries in `target` and `store.res`
+    are converted into dictionaries using `convert_results_to_plot_dict`.
+    The keys of the result of `convert_results_to_plot_dict`
+    must match the values in `timeseries_axes`.
     """
 
-    convert_scmrun_to_plot_dict: ScmRunToDictConverter
+    convert_results_to_plot_dict: ResultsToDictConverter[DataContainer]
     """
-    Callable which converts :obj:`scmdata.run.BaseScmRun` into a dictionary in
-    which the keys are a subset of the values in ``timeseries_axes``
+    Callable which converts results into a dictionary
+    in which the keys are a subset of the values in `timeseries_axes`
     """
 
-    target: scmdata.run.BaseScmRun
-    """Target to which we are optimising"""
+    target: DataContainer
+    """Target used for optimisation"""
 
-    store: OptResStore
+    store: OptResStore[DataContainer]
     """Optimisation result store"""
+
+    get_timeseries: Callable[[DataContainer], pd.DataFrame]
+    """
+    Function which converts data into timeseries.
+    """
+
+    plot_timeseries: PlotTimeseriesLike[DataContainer]
+    """
+    Function that plots our timeseries
+    """
 
     thin_ts_to_plot: int = 20
     """
     Thinning to apply to the timeseries to plot
 
-    In other words, only plot every ``thin_ts_to_plot`` runs on the timeseries
-    plots. Plotting all runs can be very expensive.
+    In other words, only plot every `thin_ts_to_plot` runs on the timeseries plots.
+    Plotting all runs can be very expensive.
     """
 
-    plot_cost_kwargs: dict[str, Any] | None = None
-    """Kwargs to pass to :func:`plot_costs`."""
-
-    plot_parameters_kwargs: dict[str, Any] | None = None
-    """Kwargs to pass to :func:`plot_parameters`."""
-
-    plot_timeseries_kwargs: dict[str, Any] | None = None
-    """Kwargs to pass to :func:`plot_timeseries`."""
-
-    get_timeseries: Callable[[scmdata.run.BaseScmRun], pd.DataFrame] | None = None
+    plot_costs: PlotCostsLike | None = None
     """
-    Function which converts data into timeseries.
+    Function that plots our costs
 
-    Specifically, converts a [`scmdata.run.BaseScmRun`][scmdata.run.BaseScmRun]
-    into a [`pandas.DataFrame`][pandas.DataFrame].
+    If not supplied, we use
+    [`plot_costs`][openscm_calibration.scipy_plotting.plot_costs].
+    """
 
-    If not provided,
-    [`get_timeseries_default`][openscm_calibration.scipy_plotting.get_timeseries_default]
-    is used.
+    plot_parameters: PlotParametersLike | None = None
+    """
+    Function that plots our parameters
+
+    If not supplied, we use
+    [`plot_parameters`][openscm_calibration.scipy_plotting.plot_parameters].
     """
 
     def callback_minimize(
@@ -301,7 +432,7 @@ class OptPlotter:
         Update the plots
 
         Intended to be used as the `callback` argument to
-        `scipy.optimize.minimize`
+        [`scipy.optimize.minimize`][].
 
         Parameters
         ----------
@@ -327,9 +458,8 @@ class OptPlotter:
             Parameter vector with best solution found so far
 
         convergence
-            Received from :func:`scipy.optimize.differential_evolution`
-            on callback. We are not sure what this does is or what it is used
-            for.
+            Received from [`scipy.optimize.differential_evolution`][] on callback.
+            We are not sure what this does is or what it is used for.
         """
         self.update_plots()
 
@@ -338,13 +468,13 @@ class OptPlotter:
         cls,
         cost_key: str,
         params: tuple[str],
-        convert_scmrun_to_plot_dict: ScmRunToDictConverter,
-        target: scmdata.run.BaseScmRun,
-        store: OptResStore,
+        convert_results_to_plot_dict: ResultsToDictConverter[DataContainer],
+        target: DataContainer,
+        store: OptResStore[DataContainer],
         kwargs_create_mosaic: dict[str, Any] | None = None,
         kwargs_get_fig_axes_holder: dict[str, Any] | None = None,
         **kwargs: Any,
-    ) -> OptPlotter:
+    ) -> OptPlotter[DataContainer]:
         """
         Create plotter with automatic figure generation
 
@@ -356,14 +486,13 @@ class OptPlotter:
         params
             Parameters that are being optimised
 
-            This is used to generate the plotting axes. It must also match the
-            order in which the parameters are handled by the optimiser i.e. it
-            is used to translate the unlabeled array of parameter values onto
-            the desired axes.
+            This is used to generate the plotting axes.
+            It must also match the order in which the parameters are handled by the optimiser,
+            i.e. it is used to translate the unlabeled array of parameter values
+            onto the desired axes.
 
-        convert_scmrun_to_plot_dict
-            Callable which converts :obj:`scmdata.run.BaseScmRun` into a
-            dictionary
+        convert_results_to_plot_dict
+            Callable which converts results into a dictionary
 
         target
             Target to which we are optimising
@@ -372,26 +501,26 @@ class OptPlotter:
             Optimisation result store
 
         kwargs_create_mosaic
-            Passed to :func:`get_optimisation_mosaic`
+            Passed to [`get_optimisation_mosaic`][openscm_calibration.scipy_plotting.get_optimisation_mosaic]
 
         kwargs_get_fig_axes_holder
-            Passed to :func:`get_fig_axes_holder_from_mosaic`
+            Passed to [`get_fig_axes_holder_from_mosaic`][openscm_calibration.scipy_plotting.get_fig_axes_holder_from_mosaic]
 
         **kwargs
-            Passed to the initialiser of :obj:`OptPlotter`
+            Passed to the initialiser of [`OptPlotter`][openscm_calibration.scipy_plotting.OptPlotter]
 
         Returns
         -------
-            :obj:`OptPlotter` initialised with generated figure, axes and
-            holder
-        """
+        :
+            Initialised instance with generated figure, axes and holder
+        """  # noqa: E501
         if kwargs_create_mosaic is None:
             kwargs_create_mosaic = {}
 
         if kwargs_get_fig_axes_holder is None:
             kwargs_get_fig_axes_holder = {}
 
-        timeseries_axes = tuple(convert_scmrun_to_plot_dict(target).keys())
+        timeseries_axes = tuple(convert_results_to_plot_dict(target).keys())
         mosaic = get_optimisation_mosaic(
             cost_key=cost_key,
             params=params,
@@ -410,7 +539,7 @@ class OptPlotter:
             cost_key=cost_key,
             parameters=params,
             timeseries_axes=timeseries_axes,
-            convert_scmrun_to_plot_dict=convert_scmrun_to_plot_dict,
+            convert_results_to_plot_dict=convert_results_to_plot_dict,
             target=target,
             store=store,
             **kwargs,
@@ -431,24 +560,15 @@ class OptPlotter:
         ax_cost = self.axes[self.cost_key]
         ax_cost.clear()
 
-        plot_cost_kwargs = (
-            self.plot_cost_kwargs if self.plot_cost_kwargs is not None else {}
-        )
-        plot_costs(ax=ax_cost, ylabel=self.cost_key, costs=costs, **plot_cost_kwargs)
+        self.plot_costs(ax=ax_cost, ylabel=self.cost_key, costs=costs)
 
         # plot parameters
         for parameter in self.parameters:
             self.axes[parameter].clear()
 
-        plot_parameters_kwargs = (
-            self.plot_parameters_kwargs
-            if self.plot_parameters_kwargs is not None
-            else {}
-        )
-        plot_parameters(
+        self.plot_parameters(
             axes=self.axes,
             para_vals=para_vals,
-            **plot_parameters_kwargs,
         )
 
         # plot timeseries
@@ -457,26 +577,14 @@ class OptPlotter:
         for k in self.timeseries_axes:
             self.axes[k].clear()
 
-        plot_timeseries_kwargs = (
-            self.plot_timeseries_kwargs
-            if self.plot_timeseries_kwargs is not None
-            else {}
-        )
-
-        if self.get_timeseries is not None:
-            get_timeseries = self.get_timeseries
-        else:
-            get_timeseries = get_timeseries_default
-
-        plot_timeseries(
+        self.plot_timeseries(
             best_run=best_run,
             others_to_plot=others_to_plot,
             target=self.target,
-            convert_scmrun_to_plot_dict=self.convert_scmrun_to_plot_dict,
+            convert_results_to_plot_dict=self.convert_results_to_plot_dict,
             timeseries_keys=self.timeseries_axes,
             axes=self.axes,
-            get_timeseries=get_timeseries,
-            **plot_timeseries_kwargs,
+            get_timeseries=self.get_timeseries,
         )
 
         # update and return
@@ -484,6 +592,7 @@ class OptPlotter:
         self.holder.update(self.fig)
 
 
+# TODO: re-think this, best option may be to remove the default
 def get_timeseries_default(
     inp: scmdata.run.BaseScmRun,
     time_axis: str = "year-month",
@@ -683,13 +792,11 @@ starting point
 """
 
 
-def plot_timeseries(  # noqa: PLR0913,too-many-locals
+def plot_timeseries_scmrun(  # noqa: PLR0913,too-many-locals
     best_run: scmdata.run.BaseScmRun,
     others_to_plot: scmdata.run.BaseScmRun,
     target: scmdata.run.BaseScmRun,
-    convert_scmrun_to_plot_dict: Callable[
-        [scmdata.run.BaseScmRun], dict[str, scmdata.run.BaseScmRun]
-    ],
+    convert_results_to_plot_dict: ResultsToDictConverter[scmdata.run.BaseScmRun],
     timeseries_keys: Iterable[str],
     axes: dict[str, matplotlib.axes.Axes],
     get_timeseries: Callable[[scmdata.run.BaseScmRun], pd.DataFrame],
@@ -714,7 +821,7 @@ def plot_timeseries(  # noqa: PLR0913,too-many-locals
     target
         Target timeseries
 
-    convert_scmrun_to_plot_dict
+    convert_results_to_plot_dict
         Callable which converts :obj:`scmdata.run.BaseScmRun` into a
         dictionary in which the keys are a subset of the values in
         ``axes``
@@ -759,9 +866,9 @@ def plot_timeseries(  # noqa: PLR0913,too-many-locals
     if not ylabel_kwargs:
         ylabel_kwargs = {}
 
-    best_run_d = convert_scmrun_to_plot_dict(best_run)
-    others_to_plot_d = convert_scmrun_to_plot_dict(others_to_plot)
-    target_runs = convert_scmrun_to_plot_dict(target)
+    best_run_d = convert_results_to_plot_dict(best_run)
+    others_to_plot_d = convert_results_to_plot_dict(others_to_plot)
+    target_runs = convert_results_to_plot_dict(target)
 
     for k in timeseries_keys:
         ax = axes[k]
@@ -806,14 +913,14 @@ def plot_timeseries(  # noqa: PLR0913,too-many-locals
 
 def get_runs_to_plot(
     costs: tuple[float, ...],
-    res: tuple[scmdata.run.BaseScmRun, ...],
+    res: tuple[DataContainer, ...],
     thin_ts_to_plot: int,
-) -> tuple[scmdata.run.BaseScmRun, scmdata.run.BaseScmRun]:
+) -> tuple[DataContainer, DataContainer]:
     """
     Get runs to plot
 
-    This retrieves the run which best matches the target (has lowest cost) and
-    then a series of others to plot
+    This retrieves the run which best matches the target (has lowest cost)
+    and then a series of others to plot.
 
     Parameters
     ----------
@@ -821,18 +928,22 @@ def get_runs_to_plot(
         Cost function value for each run (used to determine the best result)
 
     res
-        Results of each run. It is assumed that the elements in ``res`` and
-        ``costs`` line up i.e. the nth element of ``costs`` is the cost
-        function for the nth element in ``res``
+        Results of each run.
+
+        It is assumed that the elements in ``res``
+        and ``costs`` line up i.e. the nth element of ``costs``
+        is the cost function for the nth element in ``res``.
 
     thin_ts_to_plot
         Thinning to apply to the timeseries to plot
 
-        In other words, only plot every ``thin_ts_to_plot`` runs on the
-        timeseries plots. Plotting all runs can be very expensive.
+        In other words, only plot every `thin_ts_to_plot` runs
+        on the timeseries plots.
+        Plotting all runs can be very expensive.
 
     Returns
     -------
+    :
         Best iteration and then other runs to plot
 
     Raises
@@ -855,8 +966,7 @@ def get_runs_to_plot(
     if best_it in to_plot_not_best:
         to_plot_not_best.remove(best_it)
 
-    res_not_best = [res_d_success[i] for i in to_plot_not_best]
-    out_not_best = scmdata.run_append(res_not_best)
+    out_not_best = [res_d_success[i] for i in to_plot_not_best]
 
     return out_best, out_not_best
 
@@ -972,7 +1082,7 @@ def convert_target_to_model_output_units(
     *,
     target: scmdata.run.BaseScmRun,
     model_output: scmdata.run.BaseScmRun,
-    convert_scmrun_to_plot_dict: ScmRunToDictConverter,
+    convert_results_to_plot_dict: ResultsToDictConverter,
 ) -> scmdata.run.BaseScmRun:
     """
     Convert the target data to the model output's units
@@ -988,7 +1098,7 @@ def convert_target_to_model_output_units(
     model_output
         A sample of the model's output
 
-    convert_scmrun_to_plot_dict
+    convert_results_to_plot_dict
         The function that will be used to convert
         :obj:`scmdata.run.BaseScmRun` to a dictionary when doing the plotting
 
@@ -996,8 +1106,8 @@ def convert_target_to_model_output_units(
     -------
         Target data with units that match the model output
     """
-    target_d = convert_scmrun_to_plot_dict(target)
-    model_output_d = convert_scmrun_to_plot_dict(model_output)
+    target_d = convert_results_to_plot_dict(target)
+    model_output_d = convert_results_to_plot_dict(model_output)
 
     tmp = []
     for group, run in target_d.items():

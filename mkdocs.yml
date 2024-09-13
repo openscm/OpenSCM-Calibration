@@ -68,19 +68,23 @@ plugins:
         python:
           paths: [src]
           import:
+            # TODO: push latest -> stable switch back to copier
             # Cross-ref helpers (lots included here, remove what you don't want)
-            - https://www.attrs.org/en/latest/objects.inv
+            - https://www.attrs.org/en/stable/objects.inv
             - https://unidata.github.io/cftime/objects.inv
-            - https://ncdata.readthedocs.io/en/latest/objects.inv
-            - https://openscm-units.readthedocs.io/en/latest/objects.inv
+            - https://ipython.readthedocs.io/en/stable/objects.inv
+            - https://matplotlib.org/stable/objects.inv
+            - https://ncdata.readthedocs.io/en/stable/objects.inv
+            - https://openscm-units.readthedocs.io/en/stable/objects.inv
             - https://pandas.pydata.org/docs/objects.inv
-            - https://pint.readthedocs.io/en/latest/objects.inv
+            - https://pint.readthedocs.io/en/stable/objects.inv
             - https://www.fatiando.org/pooch/latest/objects.inv
             - https://docs.python.org/3/objects.inv
-            - https://scitools-iris.readthedocs.io/en/latest/objects.inv
-            - https://scmdata.readthedocs.io/en/latest/objects.inv
-            - https://validators.readthedocs.io/en/latest/objects.inv
-            - http://xarray.pydata.org/en/latest/objects.inv
+            - https://docs.scipy.org/doc/scipy/objects.inv
+            - https://scitools-iris.readthedocs.io/en/stable/objects.inv
+            - https://scmdata.readthedocs.io/en/stable/objects.inv
+            - https://validators.readthedocs.io/en/stable/objects.inv
+            - http://xarray.pydata.org/en/stable/objects.inv
           options:
             docstring_style: numpy
             show_root_heading: true

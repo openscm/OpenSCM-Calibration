@@ -45,6 +45,7 @@ notebooks = [
     "tqdm~=4.66",
     "h5py~=3.11",
     "ipywidgets~=8.1",
+    "scipy~=1.13",
 ]
 tests = [
     "emcee~=3.1",
@@ -153,7 +154,7 @@ underlines = [
 ]
 issue_format = "[#{issue}](https://github.com/openscm/OpenSCM-Calibration/pull/{issue})"
 type = [
-    { directory = "breaking", name = "⚠️ Breaking Changes", showcontent = true },
+    { directory = "breaking", name = "⚠️  Breaking Changes", showcontent = true },
     { directory = "deprecation", name = "🗑️ Deprecations", showcontent = true },
     { directory = "feature", name = "🆕 Features", showcontent = true },
     { directory = "improvement", name = "🎉 Improvements", showcontent = true },

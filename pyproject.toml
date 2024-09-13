@@ -10,6 +10,7 @@ requires-python = ">=3.9"
 dependencies = [
     "attrs",
     "more-itertools~=10.5",
+    "pint",
 ]
 readme = "README.md"
 classifiers = [
@@ -25,7 +26,6 @@ plots = [
 ]
 scmdata = [
     "pandas~=2.2",
-    "pint~=0.24",
     "scmdata~=0.17",
 ]
 

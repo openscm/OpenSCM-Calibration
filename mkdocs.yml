@@ -51,9 +51,9 @@ plugins:
       # Use filenames for titles
       ignore_h1_titles: True
       include: ["*.py"]
-      execute: true
+      # execute: true
       # Toggle off for faster builds
-      # execute: false
+      execute: false
       allow_errors: false
       # theme: dark
       include_source: True
@@ -72,6 +72,7 @@ plugins:
             - https://www.attrs.org/en/latest/objects.inv
             - https://unidata.github.io/cftime/objects.inv
             - https://ncdata.readthedocs.io/en/latest/objects.inv
+            - https://openscm-units.readthedocs.io/en/latest/objects.inv
             - https://pandas.pydata.org/docs/objects.inv
             - https://pint.readthedocs.io/en/latest/objects.inv
             - https://www.fatiando.org/pooch/latest/objects.inv

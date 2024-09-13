@@ -1,14 +1,6 @@
 <!--- --8<-- [start:description] -->
 # OpenSCM Calibration
 
-To do:
-
-- move docs to markdown
-    - including README
-- docs CI
-    - install the package too, otherwise doc auto-generation doesn't work
-        - also push this to copier
-
 Calibration tools for simple climate models (with potential for applications elsewhere)
 
 **Key info :**

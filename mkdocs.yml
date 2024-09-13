@@ -48,6 +48,7 @@ plugins:
   # https://myst-nb.readthedocs.io/en/v0.12.2/use/execute.html
   # One for another day.
   - mkdocs-jupyter:
+      # Use filenames for titles
       ignore_h1_titles: True
       include: ["*.py"]
       execute: true

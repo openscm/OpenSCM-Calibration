@@ -26,9 +26,9 @@ runs:
       with:
         python-version: ${{ inputs.python-version }}
         cache: true
-        # cache-dependency-path: |
-        #   ./pdm.lock
-        #   ./pdm-install-flags.txt
+        cache-dependency-path: |
+          ./pdm.lock
+          ./pdm-install-flags.txt
     - name: Install dependencies
       shell: bash
       if: ${{ (inputs.run-pdm-install == 'true')  && (steps.setup-pdm.outputs.cache-hit != 'true') }}

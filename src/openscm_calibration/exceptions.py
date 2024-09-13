@@ -7,8 +7,6 @@ from __future__ import annotations
 from collections.abc import Sequence
 from typing import Any
 
-import pandas as pd
-
 
 class MissingRequiredDependencyError(ImportError):
     """
@@ -137,51 +135,4 @@ class MissingValueError(ValueError):
             f"``{name}`` is missing values: ``{missing_vals}``. "
             f"Available values: ``{vals}``"
         )
-        super().__init__(error_msg)
-
-
-class AlignmentError(ValueError):
-    """
-    Raised when two [`pandas.DataFrame`][pandas.DataFrame] do not align smoothly
-    """
-
-    def __init__(  # noqa: PLR0913
-        self,
-        name_left: str,
-        val_left: pd.DataFrame | pd.Series[Any],
-        name_right: str,
-        val_right: pd.DataFrame | pd.Series[Any],
-        extra_context: str | None = None,
-    ) -> None:
-        """
-        Initialise the error
-
-        Parameters
-        ----------
-        name_left
-            The name of the first thing being referenced (variable, attribute
-            etc.)
-
-        val_left
-            The values referred to by ``name_left``
-
-        name_right
-            The name of the other thing being referenced (variable, attribute
-            etc.)
-
-        name_right
-            The values referred to by ``name_left``
-
-        extra_context
-            Any extra context to include in the message
-        """
-        error_msg = (
-            f"Please check.\n"
-            f"{name_left}:\n{val_left}\n"
-            f"{name_right}:\n{val_right}\n"
-        )
-
-        if extra_context:
-            error_msg = f"{extra_context}. {error_msg}"
-
         super().__init__(error_msg)

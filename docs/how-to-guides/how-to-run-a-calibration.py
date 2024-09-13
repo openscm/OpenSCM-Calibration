@@ -1,25 +1,27 @@
----
-jupytext:
-  text_representation:
-    extension: .md
-    format_name: myst
-    format_version: 0.13
-    jupytext_version: 1.14.5
-kernelspec:
-  display_name: Python 3 (ipykernel)
-  language: python
-  name: python3
----
+# ---
+# jupyter:
+#   jupytext:
+#     formats: ipynb,py:percent
+#     text_representation:
+#       extension: .py
+#       format_name: percent
+#       format_version: '1.3'
+#       jupytext_version: 1.16.4
+#   kernelspec:
+#     display_name: Python 3 (ipykernel)
+#     language: python
+#     name: python3
+# ---
 
-# Basic demo
+# %% [markdown]
+# # Calibration demo
+#
+# Here we give a basic demo of how to run a calibration with OpenSCM Calibration.
+#
+# ## Imports
 
-Here we give a basic demo of how to work with OpenSCM-Calibration.
-
-## Imports
-
-```{code-cell} ipython3
+# %%
 from functools import partial
-from typing import Dict, Tuple
 
 import emcee
 import matplotlib.pyplot as plt
@@ -30,7 +32,7 @@ import pint
 import scipy.integrate
 import scmdata.run
 from emcwrap import DIMEMove
-from multiprocess import Pool, Manager
+from multiprocess import Manager, Pool
 from openscm_units import unit_registry as UREG
 from tqdm.notebook import tqdm
 
@@ -49,45 +51,61 @@ from openscm_calibration.scipy_plotting import (
 )
 from openscm_calibration.scmdata_utils import scmrun_as_dict
 from openscm_calibration.store import OptResStore
-```
 
-## Background
+# %%
+RNG = np.random.default_rng()
 
-In this notebook we're going to run a simple model to solve the following equation for the motion of a mass on a damped spring
+# %% [markdown]
+# ## Background
+#
+# In this notebook we're going to run a simple model
+# to solve the following equation for the motion of a mass on a damped spring
+#
+# \begin{align*}
+# v &= \frac{dx}{dt} \\
+# m \frac{dv}{dt} &= -k (x - x_0) - \beta v
+# \end{align*}
+#
+# where $v$ is the velocity of the mass,
+# $x$ is the position of the mass,
+# $t$ is time,
+# $m$ is the mass of the mass,
+# $k$ is the spring constant,
+# $x_0$ is the equilibrium position
+# and $\beta$ is a damping constant.
 
-\begin{align*}
-v &= \frac{dx}{dt} \\
-m \frac{dv}{dt} &= -k (x - x_0) - \beta v
-\end{align*}
+# %% [markdown]
+# We are going to solve this system using
+# [scipy's solve initial value problem](https://docs.scipy.org/doc/scipy/reference/generated/scipy.integrate.solve_ivp.html).
+#
+# We want to support units,
+# so we implement this using [pint](https://pint.readthedocs.io/).
+# To make this work, we also have to define some wrappers.
+# We define these in this notebook to show you the full details.
+# If you find them distracting,
+# please [raise an issue](https://github.com/openscm/OpenSCM-Calibration/issues/new)
+# or submit a pull request.
 
-where $v$ is the velocity of the mass, $x$ is the position of the mass, $t$ is time, $m$ is the mass of the mass, $k$ is the spring constant, $x_0$ is the equilibrium position and $\beta$ is a damping constant.
+# %% [markdown]
+# ## Experiments
+#
+# We're going to calibrate the model's response in two experiments:
+#
+# - starting out of equilibrium
+# - starting at the equilibrium position but already moving
+#
+# We're going to fix the mass of the spring
+# because the system is underconstrained if it isn't fixed.
 
-+++
-
-We are going to solve this system using [scipy's solve initial value problem](https://docs.scipy.org/doc/scipy/reference/generated/scipy.integrate.solve_ivp.html).
-
-We want to support units, so we implement this using [pint](https://pint.readthedocs.io/). To make this work, we also have to define some wrappers. We define these in this notebook to show you the full details. If you find them distracting, please [raise an issue](https://github.com/openscm/OpenSCM-Calibration/issues/new) or submit a pull request.
-
-+++
-
-## Experiments
-
-We're going to calibrate the model's response in two experiments:
-
-- starting out of equilibrium
-- starting at the equilibrium position but already moving
-
-We're going to fix the mass of the spring because the system is underconstrained if it isn't fixed.
-
-```{code-cell} ipython3
+# %%
 LENGTH_UNITS = "m"
 MASS_UNITS = "Pt"
 TIME_UNITS = "yr"
 time_axis = UREG.Quantity(np.arange(1850, 2000, 1), TIME_UNITS)
 mass = UREG.Quantity(100, MASS_UNITS)
-```
 
-```{code-cell} ipython3
+
+# %%
 def do_experiments(
     k: pint.Quantity, x_zero: pint.Quantity, beta: pint.Quantity
 ) -> scmdata.run.BaseScmRun:
@@ -168,7 +186,8 @@ def do_experiments(
             t_eval=time_axis_m,
         )
         if not res[name].success:
-            raise ValueError("Model failed to solve")
+            msg = "Model failed to solve"
+            raise ValueError(msg)
 
     out = scmdata.run.BaseScmRun(
         pd.DataFrame(
@@ -187,13 +206,19 @@ def do_experiments(
     out["model"] = "example"
 
     return out
-```
 
-### Target
 
-For this example, we're going to use a known configuration as our target so we can make sure that we optimise to the right spot. In practice, we won't know the correct answer before we start so this setup will generally look a bit different (typically we would be loading data from some other source to which we want to calibrate).
+# %% [markdown]
+# ### Target
+#
+# For this example, we're going to use a known configuration as our target
+# so we can make sure that we optimise to the right spot.
+# In practice, we won't know the correct answer before we start
+# so this setup will generally look a bit different
+# (typically we would be loading data
+# from some other source to which we want to calibrate).
 
-```{code-cell} ipython3
+# %%
 truth = {
     "k": UREG.Quantity(3000, "kg / s^2"),
     "x_zero": UREG.Quantity(0.5, "m"),
@@ -204,13 +229,15 @@ target = do_experiments(**truth)
 target["model"] = "target"
 target.lineplot(time_axis="year-month")
 target
-```
 
-### Cost calculation
+# %% [markdown]
+# ### Cost calculation
+#
+# The next thing is to decide how we're going to calculate the cost function.
+# There are many options here,
+# in this case we're going to use the sum of squared errors.
 
-The next thing is to decide how we're going to calculate the cost function. There are many options here, in this case we're going to use the sum of squared errors.
-
-```{code-cell} ipython3
+# %%
 normalisation = pd.Series(
     [0.1],
     index=pd.MultiIndex.from_arrays(
@@ -230,31 +257,37 @@ cost_calculator = OptCostCalculatorSSE.from_series_normalisation(
 assert cost_calculator.calculate_cost(target) == 0
 assert cost_calculator.calculate_cost(target * 1.1) > 0
 cost_calculator
-```
 
-### Model runner
+# %% [markdown]
+# ### Model runner
+#
+# Scipy does everything using numpy arrays.
+# Here we use a wrapper that converts them to pint quantities before running.
 
-Scipy does everything using numpy arrays. Here we use a wrapper that converts them to pint quantities before running.
+# %% [markdown]
+# Firstly, we define the parameters we're going to optimise.
+# This will be used to ensure a consistent order throughout.
 
-+++
-
-Firstly, we define the parameters we're going to optimise. This will be used to ensure a consistent order throughout.
-
-```{code-cell} ipython3
+# %%
 parameters = [
     ("k", f"{MASS_UNITS} / {TIME_UNITS} ^ 2"),
     ("x_zero", LENGTH_UNITS),
     ("beta", f"{MASS_UNITS} / {TIME_UNITS}"),
 ]
 parameters
-```
 
-Next we define a function which, given pint quantities, returns the inputs needed for our `do_experiments` function. In this case this is not a very interesting function, but in other use cases the flexibility is helpful.
 
-```{code-cell} ipython3
+# %% [markdown]
+# Next we define a function which, given pint quantities,
+# returns the inputs needed for our `do_experiments` function.
+# In this case this is not a very interesting function,
+# but in other use cases the flexibility is helpful.
+
+
+# %%
 def do_model_runs_input_generator(
     k: pint.Quantity, x_zero: pint.Quantity, beta: pint.Quantity
-) -> Dict[str, pint.Quantity]:
+) -> dict[str, pint.Quantity]:
     """
     Create the inputs for :func:`do_experiments`
 
@@ -274,43 +307,44 @@ def do_model_runs_input_generator(
         Inputs for :func:`do_experiments`
     """
     return {"k": k, "x_zero": x_zero, "beta": beta}
-```
 
-```{code-cell} ipython3
+
+# %%
 model_runner = OptModelRunner.from_parameters(
     params=parameters,
     do_model_runs_input_generator=do_model_runs_input_generator,
     do_model_runs=do_experiments,
 )
 model_runner
-```
 
-Now we can run from a plain numpy array (like scipy will use) and get a result that will be understood by our cost calculator.
+# %% [markdown]
+# Now we can run from a plain numpy array (like scipy will use)
+# and get a result that will be understood by our cost calculator.
 
-```{code-cell} ipython3
+# %%
 cost_calculator.calculate_cost(model_runner.run_model([3, 0.5, 3]))
-```
 
-Now we're ready to optimise.
+# %% [markdown]
+# Now we're ready to optimise.
 
-+++
+# %% [markdown]
+# ## Global optimisation
+#
+# Scipy has many [global optimisation options](https://docs.scipy.org/doc/scipy/reference/optimize.html#global-optimization).
+# Here we show how to do this with differential evolution,
+# but using others would be equally simple.
 
-## Global optimisation
+# %% [markdown]
+# We have to define where to start the optimisation.
 
-Scipy has many [global optimisation options](https://docs.scipy.org/doc/scipy/reference/optimize.html#global-optimization). Here we show how to do this with differential evolution, but using others would be equally simple.
-
-+++
-
-We have to define where to start the optimisation.
-
-```{code-cell} ipython3
+# %%
 start = np.array([4, 0.6, 2])
 start
-```
 
-For this optimisation, we must also define bounds for each parameter.
+# %% [markdown]
+# For this optimisation, we must also define bounds for each parameter.
 
-```{code-cell} ipython3
+# %%
 bounds_dict = {
     "k": [
         UREG.Quantity(300, "kg / s^2"),
@@ -325,15 +359,16 @@ bounds_dict = {
         UREG.Quantity(1e12, "kg / s"),
     ],
 }
-display(bounds_dict)
+bounds_dict
 
+# %%
 bounds = [[v.to(unit).m for v in bounds_dict[k]] for k, unit in parameters]
 bounds
-```
 
-Now we're ready to run our optimisation.
+# %% [markdown]
+# Now we're ready to run our optimisation.
 
-```{code-cell} ipython3
+# %%
 # Number of parallel processes to use
 processes = 4
 
@@ -381,12 +416,12 @@ timeseries_axes_mosiac = list(more_itertools.repeat_each(timeseries_axes, 1))
 
 fig, axd = plt.subplot_mosaic(
     mosaic=[
-        [cost_name] + timeseries_axes_mosiac,
+        [cost_name, *timeseries_axes_mosiac],
         parameters_mosiac,
     ],
     figsize=(6, 6),
 )
-holder = display(fig, display_id=True)
+holder = display(fig, display_id=True)  # noqa: F821 # used in a notebook
 
 
 with Manager() as manager:
@@ -449,24 +484,25 @@ with Manager() as manager:
 
 plt.close()
 optimize_res
-```
 
-## Local optimisation
+# %% [markdown]
+# ## Local optimisation
+#
+# Scipy also has
+# [local optimisation](https://docs.scipy.org/doc/scipy/reference/optimize.html#local-multivariate-optimization)
+# (e.g. Nelder-Mead) options. Here we show how to do this.
 
-Scipy also has [local optimisation](https://docs.scipy.org/doc/scipy/reference/optimize.html#local-multivariate-optimization) (e.g. Nelder-Mead) options. Here we show how to do this.
+# %% [markdown]
+# Again, we have to define where to start the optimisation
+# (this has a greater effect on local optimisation).
 
-+++
-
-Again, we have to define where to start the optimisation (this has a greater effect on local optimisation).
-
-```{code-cell} ipython3
+# %%
 # Here we imagine that we're polishing from the results of the DE above,
 # but we make the start slightly worse first
 start_local = optimize_res.x
 start_local
-```
 
-```{code-cell} ipython3
+# %%
 # Optimisation parameters
 tol = 1e-4
 # Maximum number of iterations to use
@@ -537,13 +573,17 @@ with tqdm(total=max_n_runs) as pbar:
 
 plt.close()
 optimize_res_local
-```
 
-## MCMC
 
-To run MCMC, we use the [emcee](https://emcee.readthedocs.io/) package. This has heaps of options for running MCMC and is really user friendly. All the different available moves/samplers are listed [here](https://emcee.readthedocs.io/en/stable/user/moves/).
+# %% [markdown]
+# ## MCMC
+#
+# To run MCMC, we use the [emcee](https://emcee.readthedocs.io/) package.
+# This has heaps of options for running MCMC and is really user friendly.
+# All the different available moves/samplers are listed [here](https://emcee.readthedocs.io/en/stable/user/moves/).
 
-```{code-cell} ipython3
+
+# %%
 def neg_log_prior_bounds(x: np.ndarray, bounds: np.ndarray) -> float:
     """
     Log prior that just checks proposal is in bounds
@@ -565,10 +605,18 @@ def neg_log_prior_bounds(x: np.ndarray, bounds: np.ndarray) -> float:
 
 
 neg_log_prior = partial(neg_log_prior_bounds, bounds=np.array(bounds))
-```
 
-```{code-cell} ipython3
-def log_prob(x) -> Tuple[float, float, float]:
+
+# %%
+def log_prob(x) -> tuple[float, float, float]:
+    """
+    Get log probability for a given parameter vector
+
+    Returns (negative) log probability of x,
+    (negative) log likelihood of x based on the prior
+    and (negative) log likelihood of x.
+
+    """
     neg_ll_prior_x = neg_log_prior(x)
 
     if not np.isfinite(neg_ll_prior_x):
@@ -581,37 +629,38 @@ def log_prob(x) -> Tuple[float, float, float]:
 
     sses = cost_calculator.calculate_cost(model_results)
     neg_ll_x = -sses / 2
-    ll = neg_ll_x + neg_ll_prior_x
+    neg_log_prob = neg_ll_x + neg_ll_prior_x
 
-    return ll, neg_ll_prior_x, neg_ll_x
-```
+    return neg_log_prob, neg_ll_prior_x, neg_ll_x
 
-We're using the DIME proposal from [emcwrap](https://github.com/gboehl/emcwrap). This claims to have an adaptive proposal distribution so requires less fine tuning and is less sensitive to the starting point.
 
-```{code-cell} ipython3
+# %% [markdown]
+# We're using the DIME proposal from [emcwrap](https://github.com/gboehl/emcwrap).
+# This claims to have an adaptive proposal distribution
+# so requires less fine tuning and is less sensitive to the starting point.
+
+# %%
 ndim = len(bounds)
 # emcwrap docs suggest 5 * ndim
 nwalkers = 5 * ndim
 
-start_emcee = [s + s / 100 * np.random.rand(nwalkers) for s in optimize_res_local.x]
+start_emcee = [s + s / 100 * RNG.rand(nwalkers) for s in optimize_res_local.x]
 start_emcee = np.vstack(start_emcee).T
 
 move = DIMEMove()
-```
 
-```{code-cell} ipython3
+# %%
 # Use HDF5 backend
 filename = "basic-demo-mcmc.h5"
 backend = emcee.backends.HDFBackend(filename)
 backend.reset(nwalkers, ndim)
-```
 
-```{code-cell} ipython3
+# %%
 # How many parallel process to use
 processes = 4
 
 # Set the seed to ensure reproducibility
-np.random.seed(424242)
+np.random.seed(424242)  # noqa: NPY002 # want to set global seed for emcee
 
 ## MCMC options
 # Unclear at the start how many iterations are needed to sample
@@ -627,7 +676,7 @@ plot_every = 15
 convergence_ratio = 50
 parameter_order = [p[0] for p in parameters]
 neg_log_likelihood_name = "neg_ll"
-labels_chain = [neg_log_likelihood_name] + parameter_order
+labels_chain = [neg_log_likelihood_name, *parameter_order]
 
 # Stores for autocorr over steps
 autocorr = np.zeros(max_iterations)
@@ -636,26 +685,26 @@ index = 0
 
 ## Setup plots
 fig_chain, axd_chain = plt.subplot_mosaic(
-    mosaic=[[l] for l in labels_chain],
+    mosaic=[[lc] for lc in labels_chain],
     figsize=(10, 5),
 )
-holder_chain = display(fig_chain, display_id=True)
+holder_chain = display(fig_chain, display_id=True)  # noqa: F821 # used in a notebook
 
 fig_dist, axd_dist = plt.subplot_mosaic(
-    mosaic=[[l] for l in parameter_order],
+    mosaic=[[parameter] for parameter in parameter_order],
     figsize=(10, 5),
 )
-holder_dist = display(fig_dist, display_id=True)
+holder_dist = display(fig_dist, display_id=True)  # noqa: F821 # used in a notebook
 
 fig_corner = plt.figure(figsize=(6, 6))
-holder_corner = display(fig_dist, display_id=True)
+holder_corner = display(fig_dist, display_id=True)  # noqa: F821 # used in a notebook
 
 fig_tau, ax_tau = plt.subplots(
     nrows=1,
     ncols=1,
     figsize=(4, 4),
 )
-holder_tau = display(fig_tau, display_id=True)
+holder_tau = display(fig_tau, display_id=True)  # noqa: F821 # used in a notebook
 
 # Plottting helper
 truths_corner = [truth[k].to(u).m for k, u in parameters]
@@ -678,7 +727,11 @@ with Pool(processes=processes) as pool:
         progress="notebook",
         progress_kwargs={"leave": True},
     ):
-        if sampler.iteration % plot_every or sampler.iteration < 2:
+        min_samples_before_plot = 2
+        if (
+            sampler.iteration % plot_every
+            or sampler.iteration < min_samples_before_plot
+        ):
             continue
 
         if sampler.iteration < burnin + 1:
@@ -768,4 +821,3 @@ with Pool(processes=processes) as pool:
 # Close all the figures
 for _ in range(4):
     plt.close()
-```

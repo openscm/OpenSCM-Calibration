@@ -10,6 +10,7 @@ theme:
   name: "material"
   features:
     - content.code.copy
+  custom_dir: docs/overrides
   palette:
     # Light mode (toggle to dark mode)
     - scheme: default
@@ -47,6 +48,7 @@ plugins:
   # https://myst-nb.readthedocs.io/en/v0.12.2/use/execute.html
   # One for another day.
   - mkdocs-jupyter:
+      ignore_h1_titles: True
       include: ["*.py"]
       execute: true
       # Toggle off for faster builds

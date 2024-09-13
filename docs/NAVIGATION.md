@@ -6,6 +6,7 @@ See https://oprypin.github.io/mkdocs-literate-nav/
 - [Home](index.md)
 - [Installation](installation.md)
 - [How-to guides](how-to-guides/index.md)
+    - [How to run a calibration](how-to-guides/how-to-run-a-calibration.py)
 - [Tutorials](tutorials/index.md)
 - [Further background](further-background/index.md)
 - [Development](development.md)

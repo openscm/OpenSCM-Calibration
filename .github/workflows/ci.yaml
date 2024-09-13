@@ -89,7 +89,7 @@ jobs:
       - uses: ./.github/actions/setup
         with:
           python-version: ${{ matrix.python-version }}
-          pdm-dependency-install-flags: "--prod"
+          pdm-dependency-install-flags: "--prod --without :all"
       - name: Check importable without extras
         run: pdm run python scripts/test-install.py
 

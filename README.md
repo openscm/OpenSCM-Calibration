@@ -138,6 +138,8 @@ Additional dependencies can be installed using
     ```sh
     # To add plotting dependencies
     pip install openscm-calibration[plots]
+    # To add scmdata dependencies
+    pip install openscm-calibration[scmdata]
     ```
 
 ### For developers

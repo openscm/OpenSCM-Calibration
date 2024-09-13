@@ -19,6 +19,9 @@ dependencies = [
 ]
 readme = "README.md"
 
+[project.license]
+text = "BSD-3-Clause"
+
 [project.optional-dependencies]
 plots = [
     "matplotlib>=3.7.1",

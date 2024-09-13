@@ -19,16 +19,16 @@ runs:
     - name: Write file with install flags
       shell: bash
       run: |
-        echo "${{ inputs.pdm-dependency-install-flags }}1" > pdm-install-flags.txt
+        echo "${{ inputs.pdm-dependency-install-flags }}" > pdm-install-flags.txt
     - name: Setup PDM
       id: setup-pdm
       uses: pdm-project/setup-pdm@v4.1
       with:
         python-version: ${{ inputs.python-version }}
-        cache: true
-        cache-dependency-path: |
-          ./pdm.lock
-          ./pdm-install-flags.txt
+        # cache: true
+        # cache-dependency-path: |
+        #   ./pdm.lock
+        #   ./pdm-install-flags.txt
     - name: Install dependencies
       shell: bash
       if: ${{ (inputs.run-pdm-install == 'true')  && (steps.setup-pdm.outputs.cache-hit != 'true') }}

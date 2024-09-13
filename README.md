@@ -146,8 +146,6 @@ Additional dependencies can be installed using
     ```sh
     # To add plotting dependencies
     pip install openscm-calibration[plots]
-    # To add notebook dependencies
-    pip install openscm-calibration[notebooks]
     ```
 
 ### For developers

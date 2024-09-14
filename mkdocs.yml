@@ -51,9 +51,9 @@ plugins:
       # Use filenames for titles
       ignore_h1_titles: True
       include: ["*.py"]
-      # execute: true
+      execute: true
       # # Toggle off for faster builds
-      execute: false
+      # execute: false
       allow_errors: false
       # theme: dark
       include_source: True
@@ -95,7 +95,9 @@ plugins:
   - section-index
 
 markdown_extensions:
-  # https://squidfunk.github.io/mkdocs-material/setup/extensions/python-markdown/#attribute-lists
+  # Required to enable markdown anchors
+  # (https://mkdocstrings.github.io/autorefs/#markdown-anchors)
+  # Extension docs: https://squidfunk.github.io/mkdocs-material/setup/extensions/python-markdown/#attribute-lists
   - attr_list
   # Allow admonitions, useful for deprecation warnings
   # https://facelessuser.github.io/pymdown-extensions/extensions/blocks/plugins/admonition/

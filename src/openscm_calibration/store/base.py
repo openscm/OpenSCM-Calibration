@@ -28,8 +28,8 @@ class SupportsListLikeHandling(Protocol):
 
     def list(self, list_to_handle: MutableSequence[Any]) -> MutableSequence[Any]:
         """
-        Get a new object that behaves like a [`MutableSequence`][]
-        """
+        Get a new object that behaves like a [`MutableSequence`][collections.abc.MutableSequence]
+        """  # noqa: E501
 
 
 def _all_none_to_start(
@@ -220,7 +220,7 @@ class OptResStore(Generic[DataContainer]):
             Expected number of runs
 
         manager
-            Manager of lists (e.g. [`multiprocess.managers.SyncManager`][])
+            Manager of lists (e.g. [`multiprocessing.managers.SyncManager`][])
 
         params
             Names of the parameters that are being sampled

@@ -190,19 +190,19 @@ def plot_timeseries_scmrun(  # noqa: PLR0913,too-many-locals
         Passed to [`pd.DataFrame.plot.line`][pandas.DataFrame.plot.line]
         when plotting the background timeseries.
         If not supplied, we use
-        [`DEFAULT_PLOT_TIMESERIES_BACKGROUND_TS_KWARGS`][].
+        [`DEFAULT_PLOT_TIMESERIES_BACKGROUND_TS_KWARGS`][openscm_calibration.scipy_plotting.scmdata.DEFAULT_PLOT_TIMESERIES_BACKGROUND_TS_KWARGS].
 
     target_ts_kwargs
         Passed to [`pd.DataFrame.plot.line`][pandas.DataFrame.plot.line]
         when plotting the target timeseries.
         If not supplied, we use
-        [`DEFAULT_PLOT_TIMESERIES_TARGET_TS_KWARGS`][].
+        [`DEFAULT_PLOT_TIMESERIES_TARGET_TS_KWARGS`][openscm_calibration.scipy_plotting.scmdata.DEFAULT_PLOT_TIMESERIES_TARGET_TS_KWARGS].
 
     best_ts_kwargs
         Passed to [`pd.DataFrame.plot.line`][pandas.DataFrame.plot.line]
         when plotting the best timeseries.
         If not supplied, we use
-        [`DEFAULT_PLOT_TIMESERIES_BEST_TS_KWARGS`][].
+        [`DEFAULT_PLOT_TIMESERIES_BEST_TS_KWARGS`][openscm_calibration.scipy_plotting.scmdata.DEFAULT_PLOT_TIMESERIES_BEST_TS_KWARGS].
 
     ylabel_kwargs
         Passed to [`ax.set_ylabel`][matplotlib.axes.Axes.set_ylabel]

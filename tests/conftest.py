@@ -4,6 +4,8 @@ Re-useable fixtures etc. for tests
 See https://docs.pytest.org/en/7.1.x/reference/fixtures.html#conftest-py-sharing-fixtures-across-multiple-files
 """
 
+# Not used at present, hence commented out.
+# Not fully removed in case we want to use pandas output in doc tests in future.
 # import pandas as pd
 # import pytest
 #

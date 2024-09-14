@@ -126,6 +126,10 @@ def write_module_page(
     write_file = get_write_file(package_full_name, title)
 
     with mkdocs_gen_files.open(write_file, "w") as fh:
+        # Use the full package name as the heading anchor
+        # to ensure that there aren't clashes when modules have the same name
+        # but are in different (sub-)packages.
+        fh.write(f"[](){{#{package_full_name}}}")
         fh.write(f"# {title}\n")
 
         if sub_packages:

@@ -503,7 +503,7 @@ class OptPlotter(Generic[DataContainer]):
             Passed to [`get_optimisation_mosaic`][openscm_calibration.scipy_plotting.get_optimisation_mosaic]
 
         kwargs_get_fig_axes_holder
-            Passed to [`get_fig_axes_holder_from_mosaic`][openscm_calibration.scipy_plotting.get_fig_axes_holder_from_mosaic]
+            Passed to [`get_fig_axes_holder_from_mosaic`][openscm_calibration.matplotlib_utils.get_fig_axes_holder_from_mosaic]
 
         **kwargs
             Passed to the initialiser of [`OptPlotter`][openscm_calibration.scipy_plotting.OptPlotter]

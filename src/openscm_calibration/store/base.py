@@ -1,5 +1,5 @@
 """
-Storage class
+Base implementation of store of results
 """
 
 from __future__ import annotations
@@ -19,7 +19,6 @@ from openscm_calibration.typing import DataContainer
 
 if TYPE_CHECKING:
     import attr
-    import scmdata.run
 
 
 class SupportsListLikeHandling(Protocol):
@@ -29,7 +28,7 @@ class SupportsListLikeHandling(Protocol):
 
     def list(self, list_to_handle: MutableSequence[Any]) -> MutableSequence[Any]:
         """
-        Get a new object that behaves like a :obj:`MutableSequence`
+        Get a new object that behaves like a [`MutableSequence`][]
         """
 
 
@@ -150,7 +149,7 @@ class OptResStore(Generic[DataContainer]):
     """x vectors sampled"""
 
     params: tuple[str]
-    """Names of the parameters being stored in ``x_samples``"""
+    """Names of the parameters being stored in `x_samples`"""
 
     available_indices: MutableSequence[int] = field(
         validator=[_same_length_as_res, _contains_indices_in_res]
@@ -221,7 +220,7 @@ class OptResStore(Generic[DataContainer]):
             Expected number of runs
 
         manager
-            Manager of lists (e.g. :class:`multiprocess.managers.SyncManager`)
+            Manager of lists (e.g. [`multiprocess.managers.SyncManager`][])
 
         params
             Names of the parameters that are being sampled
@@ -254,6 +253,7 @@ class OptResStore(Generic[DataContainer]):
 
         Returns
         -------
+        :
             Available index. This index is now no longer considered available.
         """
         return self.available_indices.pop()
@@ -271,7 +271,7 @@ class OptResStore(Generic[DataContainer]):
         Parameters
         ----------
         res
-            Result to append (use ``None`` for a failed run)
+            Result to append (use `None` for a failed run)
 
         cost
             Cost associated with the run
@@ -280,7 +280,7 @@ class OptResStore(Generic[DataContainer]):
             Parameter array associated with the run
 
         idx
-            Index in ``self.costs``, ``self.x_samples`` and ``self.res`` to write into
+            Index in `self.costs`, `self.x_samples` and `self.res` to write into
         """
         len_x = len(x)
         len_params = len(self.params)
@@ -308,7 +308,7 @@ class OptResStore(Generic[DataContainer]):
         Parameters
         ----------
         res
-            Result to append (use ``None`` for a failed run)
+            Result to append (use `None` for a failed run)
 
         cost
             Cost associated with the run
@@ -336,10 +336,10 @@ class OptResStore(Generic[DataContainer]):
         """
         Note that a run failed
 
-        Typically, ``cost`` will be ``np.inf``.
+        Typically, `cost` will be `np.inf`.
 
         The cost and x parameters are appended to the results, as well as an
-        indicator that the run was a failure in ``self.res``.
+        indicator that the run was a failure in `self.res`.
 
         Parameters
         ----------
@@ -413,8 +413,9 @@ class OptResStore(Generic[DataContainer]):
 
         Returns
         -------
-            Costs, x_samples and res from all runs which were attempted (i.e. we
-            include failed runs here)
+        :
+            Costs, x_samples and res from all runs which were attempted
+            (i.e. we include failed runs here)
         """
         unlabelled = self.get_costs_xsamples_res()
         if not any(unlabelled):
@@ -430,31 +431,3 @@ class OptResStore(Generic[DataContainer]):
         out = (unlabelled[0], xs_labelled, unlabelled[2])
 
         return out
-
-
-def add_iteration_to_res_scmrun(
-    res: scmdata.run.BaseScmRun, iteration: int, iteration_metadata_column: str = "it"
-) -> scmdata.run.BaseScmRun:
-    """
-    Add iteration information to a result stored as [`scmdata.run.BaseScmRun`][]
-
-    Parameters
-    ----------
-    res
-        Result of the run
-
-    iteration
-        Iteration to assign to the run
-
-    iteration_metadata_column
-        Metadata column in which to store the iteration information
-
-    Returns
-    -------
-    :
-        Result with iteration information added.
-    """
-    out = res.copy()
-    out[iteration_metadata_column] = iteration
-
-    return out

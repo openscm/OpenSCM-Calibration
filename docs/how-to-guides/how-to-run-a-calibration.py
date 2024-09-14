@@ -47,13 +47,16 @@ from openscm_calibration.model_runner import OptModelRunner
 from openscm_calibration.scipy_plotting import (
     CallbackProxy,
     OptPlotter,
-    get_timeseries_scmrun,
     get_ymax_default,
     plot_costs,
+)
+from openscm_calibration.scipy_plotting.scmdata import (
+    get_timeseries_scmrun,
     plot_timeseries_scmrun,
 )
 from openscm_calibration.scmdata_utils import scmrun_as_dict
-from openscm_calibration.store import OptResStore, add_iteration_to_res_scmrun
+from openscm_calibration.store import OptResStore
+from openscm_calibration.store.scmdata import add_iteration_to_res_scmrun
 
 # %%
 # Set the seed to ensure reproducibility

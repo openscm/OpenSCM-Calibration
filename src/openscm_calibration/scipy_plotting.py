@@ -20,7 +20,10 @@ import numpy as np
 from attrs import define, field
 from typing_extensions import TypeAlias
 
-from openscm_calibration.exceptions import MissingValueError
+from openscm_calibration.exceptions import (
+    MissingOptionalDependencyError,
+    MissingValueError,
+)
 from openscm_calibration.matplotlib_utils import get_fig_axes_holder_from_mosaic
 from openscm_calibration.typing import DataContainer
 
@@ -858,6 +861,13 @@ def plot_timeseries_scmrun(  # noqa: PLR0913,too-many-locals
     ylabel_kwargs
         Passed to :meth:`ax.set_ylabel` when setting the y-labels of each panel
     """
+    try:
+        import scmdata
+    except ImportError as exc:
+        raise MissingOptionalDependencyError(
+            "plot_timeseries_scmrun", requirement="scmdata"
+        ) from exc
+
     if not background_ts_kwargs:
         background_ts_kwargs = DEFAULT_PLOT_TIMESERIES_BACKGROUND_TS_KWARGS
 
@@ -886,12 +896,13 @@ def plot_timeseries_scmrun(  # noqa: PLR0913,too-many-locals
             # Avoidable user side, hence warn (see
             # https://docs.python.org/3/howto/logging.html#when-to-use-logging)
             warn_msg = (
-                f"Converting target units ('{target_k_unit}') to model output "
-                f"units ('{model_unit}'), this will happen every time you "
-                "plot and is slow. Please convert the target units to the "
-                "model's units before doing the optimisation for increased "
-                "performance (the function "
-                "``convert_target_to_model_output_units`` may be helpful)."
+                f"Converting target units ({target_k_unit!r}) "
+                f"to model output units ({model_unit!r}), "
+                "this will happen every time you plot and is slow. "
+                "Please convert the target units to the model's units "
+                "before doing the optimisation for increased performance "
+                "(the function `convert_target_to_model_output_units_scmrun` "
+                "may be helpful)."
             )
             warnings.warn(warn_msg)
             target_k = target_k.convert_unit(model_unit)
@@ -1111,6 +1122,13 @@ def convert_target_to_model_output_units_scmrun(
     :
         Target data with units that match the model output
     """
+    try:
+        import scmdata
+    except ImportError as exc:
+        raise MissingOptionalDependencyError(
+            "convert_target_to_model_output_units_scmrun", requirement="scmdata"
+        ) from exc
+
     target_d = convert_results_to_plot_dict(target)
     model_output_d = convert_results_to_plot_dict(model_output)
 

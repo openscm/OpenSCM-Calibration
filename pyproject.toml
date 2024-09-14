@@ -20,13 +20,13 @@ classifiers = [
 
 [project.optional-dependencies]
 plots = [
+    "corner~=2.0",
     "ipython~=8.18",
     "matplotlib~=3.7",
-    "corner~=2.0",
+    "pandas~=2.2",
     "seaborn~=0.13",
 ]
 scmdata = [
-    "pandas~=2.2",
     "scmdata~=0.17",
 ]
 

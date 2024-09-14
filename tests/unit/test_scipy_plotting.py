@@ -30,6 +30,7 @@ from openscm_calibration.scipy_plotting import (
 from openscm_calibration.scmdata_utils import scmrun_as_dict
 
 pd = pytest.importorskip("pandas")
+scmdata = pytest.importorskip("scmdata")
 scmdata_run = pytest.importorskip("scmdata.run")
 scmdata_testing = pytest.importorskip("scmdata.testing")
 
@@ -581,9 +582,9 @@ def test_plot_parameters(alpha, alpha_exp, extra_kwargs, extra_kwargs_exp):
         ),
     ),
 )
-@patch("openscm_calibration.scipy_plotting.scmdata")
-def test_plot_timeseries(  # noqa: PLR0913
-    mock_scmdata,
+@patch.object(scmdata, "run_append", side_effect=lambda x: x)
+def test_plot_timeseries_scmrun(  # noqa: PLR0913
+    mock_scmdata_run_append,
     exp_warn,
     others_empty,
     background_ts_kwargs,
@@ -607,7 +608,6 @@ def test_plot_timeseries(  # noqa: PLR0913
     axes = {"a": Mock(), "b": Mock()}
     mock_get_timeseries_return = Mock()
     get_timeseries = Mock(return_value=mock_get_timeseries_return)
-    mock_scmdata.run_append = lambda x: x
 
     # Setup
     def _get_scmrun_mock(name, unit, empty=False):
@@ -665,12 +665,12 @@ def test_plot_timeseries(  # noqa: PLR0913
         assert len(recwarn) == 1
         warn = recwarn.pop(UserWarning)
         exp_warn_msg = (
-            f"Converting target units ('{target_unit}') to model output "
-            f"units ('{unit}'), this will happen every time you "
+            f"Converting target units ({target_unit!r}) to model output "
+            f"units ({unit!r}), this will happen every time you "
             "plot and is slow. Please convert the target units to the "
             "model's units before doing the optimisation for increased "
             "performance (the function "
-            "``convert_target_to_model_output_units`` may be helpful)."
+            "`convert_target_to_model_output_units_scmrun` may be helpful)."
         )
         assert str(warn.message) == exp_warn_msg
 

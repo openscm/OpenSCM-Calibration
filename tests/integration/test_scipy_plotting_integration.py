@@ -3,12 +3,13 @@ Integration tests of :mod:`openscm_calibration.scipy_plotting`
 """
 
 import numpy as np
-import pandas as pd
-import pandas.testing as pdt
 import pytest
-import scmdata.run
 
 from openscm_calibration.scipy_plotting import get_timeseries_scmrun
+
+pd = pytest.importorskip("pandas")
+pdt = pytest.importorskip("pandas.testing")
+scmdata_run = pytest.importorskip("scmdata.run")
 
 RNG = np.random.default_rng()
 
@@ -37,7 +38,7 @@ def test_get_timeseries_default(time_axis, years, years_exp):
         columns=years,
         index=index,
     )
-    inp = scmdata.run.BaseScmRun(inp_ts)
+    inp = scmdata_run.BaseScmRun(inp_ts)
 
     call_kwargs = {}
 

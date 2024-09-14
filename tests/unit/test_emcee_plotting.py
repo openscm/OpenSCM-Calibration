@@ -16,6 +16,9 @@ from openscm_calibration.emcee_plotting import (
     plot_parameter_chains,
 )
 
+corner = pytest.importorskip("corner")
+sns = pytest.importorskip("seaborn")
+
 
 @pytest.mark.parametrize(
     "get_neg_log_likelihood_ylim", (None, Mock(return_value=[-1, -3]))
@@ -264,9 +267,9 @@ def test_get_neg_log_likelihood_ylim_default(  # noqa: PLR0913
     assert res == exp
 
 
-@patch("openscm_calibration.emcee_plotting.HAS_SEABORN", False)
+@patch.dict("sys.modules", values={"seaborn": None})
 def test_no_seaborn():
-    error_msg = re.escape("``plot_dist`` requires seaborn to be installed")
+    error_msg = re.escape("`plot_dist` requires seaborn to be installed")
     with pytest.raises(ImportError, match=error_msg):
         plot_dist(
             inp=Mock(),
@@ -290,11 +293,11 @@ def test_no_seaborn():
         ({"linewidth": 3}, {"linewidth": 3}),
     ),
 )
-@patch("openscm_calibration.emcee_plotting.sns")
+@patch.object(sns, "kdeplot")
 @patch("openscm_calibration.emcee_plotting.get_labelled_chain_data")
 def test_plot_dist(  # noqa: PLR0913
     mock_get_labelled_chain_data,
-    mock_sns,
+    mock_sns_kdeplot,
     parameter_order,
     burnin,
     thin,
@@ -346,7 +349,7 @@ def test_plot_dist(  # noqa: PLR0913
     for label in parameter_order:
         expected_vals = mock_get_labelled_chain_data.return_value[label]
 
-        mock_sns.kdeplot.assert_any_call(
+        mock_sns_kdeplot.assert_any_call(
             data=expected_vals,
             ax=axes_d[label],
             common_norm=common_norm_exp,
@@ -357,9 +360,9 @@ def test_plot_dist(  # noqa: PLR0913
         axes_d[label].set_xlabel.assert_called_with(label)
 
 
-@patch("openscm_calibration.emcee_plotting.HAS_CORNER", False)
+@patch.dict("sys.modules", values={"corner": None})
 def test_no_corner():
-    error_msg = re.escape("``plot_corner`` requires corner to be installed")
+    error_msg = re.escape("`plot_corner` requires corner to be installed")
     with pytest.raises(ImportError, match=error_msg):
         plot_corner(
             inp=Mock(),
@@ -416,9 +419,9 @@ def test_no_corner():
         ({"linewidth": 3}, {"linewidth": 3}),
     ),
 )
-@patch("openscm_calibration.emcee_plotting.corner")
+@patch.object(corner, "corner")
 def test_plot_corner(  # noqa: PLR0913
-    mock_corner,
+    mock_corner_corner,
     burnin,
     thin,
     parameter_order,
@@ -476,7 +479,7 @@ def test_plot_corner(  # noqa: PLR0913
         **call_kwargs,
     )
 
-    mock_corner.corner.assert_called_with(
+    mock_corner_corner.assert_called_with(
         inp.get_chain.return_value,
         labels=parameter_order,
         fig=fig,

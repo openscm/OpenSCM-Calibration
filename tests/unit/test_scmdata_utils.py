@@ -2,12 +2,13 @@
 Tests of :mod:`openscm_calibration.scmdata_utils`
 """
 
-import pandas as pd
 import pytest
-import scmdata.testing
-from scmdata.run import BaseScmRun
 
 from openscm_calibration.scmdata_utils import scmrun_as_dict
+
+pd = pytest.importorskip("pandas")
+scmdata_run = pytest.importorskip("scmdata.run")
+scmdata_testing = pytest.importorskip("scmdata.testing")
 
 
 @pytest.fixture()
@@ -61,7 +62,7 @@ def basic_scmrun():
         ],
     )
 
-    return BaseScmRun(timeseries)
+    return scmdata_run.BaseScmRun(timeseries)
 
 
 @pytest.mark.parametrize(
@@ -88,7 +89,7 @@ def test_groups(separator, exp_separator, groups, exp_keys, basic_scmrun):
     assert res.keys() == exp.keys()
     assert set(res.keys()) == set(exp_keys)
     for key in exp_keys:
-        scmdata.testing.assert_scmdf_almost_equal(res[key], exp[key])
+        scmdata_testing.assert_scmdf_almost_equal(res[key], exp[key])
 
 
 def test_non_existent_group(basic_scmrun):

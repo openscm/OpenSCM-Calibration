@@ -6,13 +6,15 @@ import re
 
 import numpy as np
 import numpy.testing as npt
-import pandas as pd
 import pytest
-import scmdata.run
-import scmdata.testing
 
 from openscm_calibration.cost.scmdata import AlignmentError, OptCostCalculatorSSE
 from openscm_calibration.exceptions import MissingValueError
+
+pd = pytest.importorskip("pandas")
+pdt = pytest.importorskip("pandas.testing")
+scmdata_run = pytest.importorskip("scmdata.run")
+scmdata_testing = pytest.importorskip("scmdata.testing")
 
 
 @pytest.fixture()
@@ -34,7 +36,7 @@ def dummy_target(dummy_model_col):
         ),
     )
 
-    return scmdata.run.BaseScmRun(timeseries)
+    return scmdata_run.BaseScmRun(timeseries)
 
 
 @pytest.fixture()
@@ -134,7 +136,7 @@ def test_from_series_normalisation(dummy_model_col):
         names=("variable", "unit", "scenario", dummy_model_col),
     )
 
-    target = scmdata.run.BaseScmRun(
+    target = scmdata_run.BaseScmRun(
         pd.DataFrame(
             [
                 [1, 1.2, 2.0],
@@ -147,7 +149,7 @@ def test_from_series_normalisation(dummy_model_col):
         )
     )
 
-    exp_normalisation = scmdata.run.BaseScmRun(
+    exp_normalisation = scmdata_run.BaseScmRun(
         pd.DataFrame(
             [
                 [1.1, 1.1, 1.1],
@@ -177,7 +179,7 @@ def test_from_series_normalisation(dummy_model_col):
         normalisation_series=norm_series,
     )
 
-    scmdata.testing.assert_scmdf_almost_equal(
+    scmdata_testing.assert_scmdf_almost_equal(
         exp_normalisation,
         calc.normalisation,
         allow_unordered=True,
@@ -206,7 +208,7 @@ def test_from_series_normalisation_weights(norm_values, exp_cost, dummy_model_co
 
     target_temp_vals = np.array([1, 1.5, 2.0])
     target_ohu_vals = np.array([20.0, 26.0, 30.0])
-    target = scmdata.run.BaseScmRun(
+    target = scmdata_run.BaseScmRun(
         pd.DataFrame(
             np.vstack([target_temp_vals, target_ohu_vals]),
             columns=years,
@@ -216,7 +218,7 @@ def test_from_series_normalisation_weights(norm_values, exp_cost, dummy_model_co
 
     results_temp_vals = np.array([1.1, 1.4, 2.0])
     results_ohu_vals = np.array([21.0, 25.0, 32.0])
-    results = scmdata.run.BaseScmRun(
+    results = scmdata_run.BaseScmRun(
         pd.DataFrame(
             np.vstack([results_temp_vals, results_ohu_vals]),
             columns=years,

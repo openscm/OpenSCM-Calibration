@@ -9,10 +9,7 @@ from unittest.mock import Mock, call, patch
 
 import more_itertools
 import numpy as np
-import pandas as pd
 import pytest
-import scmdata.run
-import scmdata.testing
 
 from openscm_calibration.exceptions import MissingValueError
 from openscm_calibration.scipy_plotting import (
@@ -31,6 +28,10 @@ from openscm_calibration.scipy_plotting import (
     plot_timeseries_scmrun,
 )
 from openscm_calibration.scmdata_utils import scmrun_as_dict
+
+pd = pytest.importorskip("pandas")
+scmdata_run = pytest.importorskip("scmdata.run")
+scmdata_testing = pytest.importorskip("scmdata.testing")
 
 RNG = np.random.default_rng()
 
@@ -108,7 +109,7 @@ def test_timeseries_axes_convert_run_target_incompatible(dummy_init_kwargs):
         columns=years,
         index=index,
     )
-    target = scmdata.run.BaseScmRun(target_ts)
+    target = scmdata_run.BaseScmRun(target_ts)
 
     convert_scmrun_to_plot_dict = partial(scmrun_as_dict, groups=("variable",))
 
@@ -924,7 +925,7 @@ def test_convert_target_to_model_output_units():
         columns=years,
         index=index_target,
     )
-    target = scmdata.run.BaseScmRun(df_target)
+    target = scmdata_run.BaseScmRun(df_target)
 
     index_sample = pd.MultiIndex.from_tuples(
         [(name, unit) for name, unit in (("dT", "mK"), ("OHU", "ZJ / yr"))],
@@ -935,7 +936,7 @@ def test_convert_target_to_model_output_units():
         columns=years,
         index=index_sample,
     )
-    sample = scmdata.run.BaseScmRun(df_sample)
+    sample = scmdata_run.BaseScmRun(df_sample)
 
     convert_scmrun_to_plot_dict = partial(scmrun_as_dict, groups=("variable",))
 
@@ -949,7 +950,7 @@ def test_convert_target_to_model_output_units():
         "ZJ / yr", variable="OHU"
     )
 
-    scmdata.testing.assert_scmdf_almost_equal(
+    scmdata_testing.assert_scmdf_almost_equal(
         res, exp, allow_unordered=True, check_ts_names=False
     )
 

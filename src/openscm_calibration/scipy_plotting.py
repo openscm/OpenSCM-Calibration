@@ -15,12 +15,8 @@ from typing import (
     Protocol,
 )
 
-import matplotlib.axes
 import more_itertools
 import numpy as np
-import pandas as pd
-import scmdata
-import scmdata.run
 from attrs import define, field
 from typing_extensions import TypeAlias
 
@@ -31,6 +27,10 @@ from openscm_calibration.typing import DataContainer
 if TYPE_CHECKING:
     import attr
     import matplotlib
+    import matplotlib.axes
+    import pandas as pd
+    import scmdata
+    import scmdata.run
     import tqdm
 
     from openscm_calibration.store import OptResStore

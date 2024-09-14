@@ -51,9 +51,9 @@ plugins:
       # Use filenames for titles
       ignore_h1_titles: True
       include: ["*.py"]
-      # execute: true
-      # Toggle off for faster builds
-      execute: false
+      execute: true
+      # # Toggle off for faster builds
+      # execute: false
       allow_errors: false
       # theme: dark
       include_source: True
@@ -68,7 +68,6 @@ plugins:
         python:
           paths: [src]
           import:
-            # TODO: push latest -> stable switch back to copier
             # Cross-ref helpers (lots included here, remove what you don't want)
             - https://www.attrs.org/en/stable/objects.inv
             - https://unidata.github.io/cftime/objects.inv

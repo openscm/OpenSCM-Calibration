@@ -113,6 +113,9 @@ def test_from_parameters_run_model(mock_get_params):
     ),
 )
 def test_x_and_parameters_to_named_with_units(x_in, params_in, exp):
+    original_ureg = pint.get_application_registry()
+    pint.set_application_registry(UNIT_REG)
+
     res = x_and_parameters_to_named_with_units(
         x=x_in,
         params=params_in,
@@ -123,6 +126,8 @@ def test_x_and_parameters_to_named_with_units(x_in, params_in, exp):
             pint.testing.assert_allclose(exp_v, res[k])
         else:
             assert exp_v == res[k]
+
+    pint.set_application_registry(original_ureg)
 
 
 def test_convert_x_to_names_with_units_dependency_injection():

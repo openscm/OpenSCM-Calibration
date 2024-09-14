@@ -31,10 +31,10 @@ DEFAULT_PLOT_TIMESERIES_BACKGROUND_TS_KWARGS: dict[str, Any] = {
     "zorder": 1.5,
 }
 """
-Default value for `background_ts_kwargs` used by `plot_timeseries`
+Default value for `background_ts_kwargs` used by `plot_timeseries_scmrun`
 
-Provided to give the user an easy to modify these defaults if they wish or a
-starting point
+Provided to give the user an easy to modify these defaults if they wish
+or a starting point.
 """
 
 
@@ -46,10 +46,10 @@ DEFAULT_PLOT_TIMESERIES_TARGET_TS_KWARGS: dict[str, Any] = {
     "zorder": 2,
 }
 """
-Default value for ``target_ts_kwargs`` used by ``plot_timeseries``
+Default value for `target_ts_kwargs` used by `plot_timeseries_scmrun`
 
-Provided to give the user an easy to modify these defaults if they wish or a
-starting point
+Provided to give the user an easy to modify these defaults if they wish
+or a starting point.
 """
 
 
@@ -61,10 +61,10 @@ DEFAULT_PLOT_TIMESERIES_BEST_TS_KWARGS: dict[str, Any] = {
     "zorder": 2.5,
 }
 """
-Default value for ``best_ts_kwargs`` used by ``plot_timeseries``
+Default value for `best_ts_kwargs` used by `plot_timeseries_scmrun`
 
-Provided to give the user an easy to modify these defaults if they wish or a
-starting point
+Provided to give the user an easy to modify these defaults if they wish
+or a starting point.
 """
 
 
@@ -173,9 +173,8 @@ def plot_timeseries_scmrun(  # noqa: PLR0913,too-many-locals
         Target timeseries
 
     convert_results_to_plot_dict
-        Callable which converts :obj:`scmdata.run.BaseScmRun` into a
-        dictionary in which the keys are a subset of the values in
-        ``axes``
+        Callable which converts [`scmdata.run.BaseScmRun`][]
+        into a dictionary in which the keys are a subset of the values in `axes`.
 
     timeseries_keys
         Keys of the timeseries to plot
@@ -184,26 +183,30 @@ def plot_timeseries_scmrun(  # noqa: PLR0913,too-many-locals
         Axes on which to plot
 
     get_timeseries
-        Function which converts :obj:`scmdata.run.BaseScmRun` into a
-        :obj:`pd.DataFrame` for plotting
+        Function which converts [`scmdata.run.BaseScmRun`][] into a
+        [`pd.DataFrame`][pandas.DataFrame] for plotting
 
     background_ts_kwargs
-        Passed to :meth:`pd.DataFrame.plot.line` when plotting the background
-        timeseries. If not supplied, we use
-        ``DEFAULT_PLOT_TIMESERIES_BACKGROUND_TS_KWARGS``.
+        Passed to [`pd.DataFrame.plot.line`][pandas.DataFrame.plot.line]
+        when plotting the background timeseries.
+        If not supplied, we use
+        [`DEFAULT_PLOT_TIMESERIES_BACKGROUND_TS_KWARGS`][].
 
     target_ts_kwargs
-        Passed to :meth:`pd.DataFrame.plot.line` when plotting the target
-        timeseries. If not supplied, we use
-        ``DEFAULT_PLOT_TIMESERIES_TARGET_TS_KWARGS``.
+        Passed to [`pd.DataFrame.plot.line`][pandas.DataFrame.plot.line]
+        when plotting the target timeseries.
+        If not supplied, we use
+        [`DEFAULT_PLOT_TIMESERIES_TARGET_TS_KWARGS`][].
 
     best_ts_kwargs
-        Passed to :meth:`pd.DataFrame.plot.line` when plotting the best
-        timeseries. If not supplied, we use
-        ``DEFAULT_PLOT_TIMESERIES_BEST_TS_KWARGS``.
+        Passed to [`pd.DataFrame.plot.line`][pandas.DataFrame.plot.line]
+        when plotting the best timeseries.
+        If not supplied, we use
+        [`DEFAULT_PLOT_TIMESERIES_BEST_TS_KWARGS`][].
 
     ylabel_kwargs
-        Passed to :meth:`ax.set_ylabel` when setting the y-labels of each panel
+        Passed to [`ax.set_ylabel`][matplotlib.axes.Axes.set_ylabel]
+        when setting the y-labels of each panel.
     """
     try:
         import scmdata

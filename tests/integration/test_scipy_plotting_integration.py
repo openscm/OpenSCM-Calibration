@@ -5,7 +5,7 @@ Integration tests of :mod:`openscm_calibration.scipy_plotting`
 import numpy as np
 import pytest
 
-from openscm_calibration.scipy_plotting import get_timeseries_scmrun
+from openscm_calibration.scipy_plotting.scmdata import get_timeseries_scmrun
 
 pd = pytest.importorskip("pandas")
 pdt = pytest.importorskip("pandas.testing")

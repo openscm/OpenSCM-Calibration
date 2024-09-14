@@ -14,26 +14,12 @@ from typing import (
 import numpy as np
 
 from openscm_calibration.emcee_utils import get_labelled_chain_data
-from openscm_calibration.exceptions import MissingRequiredDependencyError
+from openscm_calibration.exceptions import MissingOptionalDependencyError
 
 if TYPE_CHECKING:
     import emcee
     import matplotlib
     import matplotlib.axes
-
-try:
-    import corner
-
-    HAS_CORNER = True
-except ImportError:  # pragma: no cover
-    HAS_CORNER = False
-
-try:
-    import seaborn as sns
-
-    HAS_SEABORN = True
-except ImportError:  # pragma: no cover
-    HAS_SEABORN = False
 
 
 def plot_chains(  # noqa: PLR0913
@@ -287,8 +273,12 @@ def plot_dist(  # noqa: PLR0913
     **kwargs
         Passed to :func:`sns.kdeplot`.
     """
-    if not HAS_SEABORN:
-        raise MissingRequiredDependencyError("plot_dist", requirement="seaborn")
+    try:
+        import seaborn as sns
+    except ImportError as exc:
+        raise MissingOptionalDependencyError(
+            "plot_dist", requirement="seaborn"
+        ) from exc
 
     burnt_in_samples_labelled = get_labelled_chain_data(
         inp,
@@ -411,8 +401,12 @@ def plot_corner(  # noqa: PLR0913,too-many-locals
     **kwargs
         Passed to :func:`corner.corner`
     """
-    if not HAS_CORNER:
-        raise MissingRequiredDependencyError("plot_corner", requirement="corner")
+    try:
+        import corner
+    except ImportError as exc:
+        raise MissingOptionalDependencyError(
+            "plot_corner", requirement="corner"
+        ) from exc
 
     if title_kwargs is None:
         title_kwargs = DEFAULT_PLOT_CORNER_TITLE_KWARGS

@@ -6,22 +6,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from openscm_calibration.exceptions import MissingRequiredDependencyError
-
-try:
-    import matplotlib.pyplot as plt
-
-    HAS_MATPLOTLIB = True
-except ImportError:  # pragma: no cover
-    HAS_MATPLOTLIB = False
-
-try:
-    import IPython.display
-
-    HAS_IPYTHON = True
-except ImportError:  # pragma: no cover
-    HAS_IPYTHON = False
-
+from openscm_calibration.exceptions import MissingOptionalDependencyError
 
 if TYPE_CHECKING:
     from typing import Any
@@ -60,15 +45,19 @@ def get_fig_axes_holder_from_mosaic(
     ImportError
         ``matplotlib`` is not installed or ``IPython`` is not installed
     """
-    if not HAS_MATPLOTLIB:
-        raise MissingRequiredDependencyError(
+    try:
+        import matplotlib.pyplot as plt
+    except ImportError as exc:
+        raise MissingOptionalDependencyError(
             "get_fig_axes_holder_from_mosaic", requirement="matplotlib"
-        )
+        ) from exc
 
-    if not HAS_IPYTHON:
-        raise MissingRequiredDependencyError(
+    try:
+        import IPython.display
+    except ImportError as exc:
+        raise MissingOptionalDependencyError(
             "get_fig_axes_holder_from_mosaic", requirement="IPython"
-        )
+        ) from exc
 
     fig, axes = plt.subplot_mosaic(
         mosaic=mosaic,  # type: ignore # matplotlib's type hints are unclear

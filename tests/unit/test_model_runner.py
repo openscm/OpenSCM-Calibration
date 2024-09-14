@@ -10,14 +10,15 @@ import pint
 import pint.errors
 import pint.testing
 import pytest
-from openscm_units import unit_registry
 
 from openscm_calibration.model_runner import (
     OptModelRunner,
     x_and_parameters_to_named_with_units,
 )
 
-UNIT_REG = unit_registry
+openscm_units = pytest.importorskip("openscm_units")
+
+UNIT_REG = openscm_units.unit_registry
 
 
 def test_run_model():

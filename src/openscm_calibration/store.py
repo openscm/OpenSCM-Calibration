@@ -8,7 +8,6 @@ from collections.abc import MutableSequence
 from typing import TYPE_CHECKING, Any, Callable, Generic, Protocol
 
 import numpy as np
-import scmdata.run
 from attrs import define, field
 
 from openscm_calibration.exceptions import (
@@ -20,6 +19,7 @@ from openscm_calibration.typing import DataContainer
 
 if TYPE_CHECKING:
     import attr
+    import scmdata.run
 
 
 class SupportsListLikeHandling(Protocol):

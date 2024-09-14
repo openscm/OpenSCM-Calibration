@@ -8,12 +8,11 @@ from collections.abc import Sequence
 from typing import Any
 
 
-class MissingRequiredDependencyError(ImportError):
+class MissingOptionalDependencyError(ImportError):
     """
-    Raised when a dependency is missing
+    Raised when an optional dependency is missing
 
-    This is only needed for optional dependencies e.g. plotting dependencies
-    like seaborn
+    For example, plotting dependencies like seaborn
     """
 
     def __init__(self, callable_name: str, requirement: str) -> None:
@@ -28,7 +27,7 @@ class MissingRequiredDependencyError(ImportError):
         requirement
             The name of the requirement
         """
-        error_msg = f"``{callable_name}`` requires {requirement} to be installed"
+        error_msg = f"`{callable_name}` requires {requirement} to be installed"
         super().__init__(error_msg)
 
 

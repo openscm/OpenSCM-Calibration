@@ -5,8 +5,10 @@ scmdata utility functions
 from __future__ import annotations
 
 from collections.abc import Iterable
+from typing import TYPE_CHECKING
 
-import scmdata.run
+if TYPE_CHECKING:
+    import scmdata.run
 
 
 def scmrun_as_dict(

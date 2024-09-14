@@ -9,7 +9,6 @@ from functools import partial
 from typing import Any, Callable, Generic, Protocol
 
 import numpy as np
-import openscm_units
 import pint
 from attrs import define
 
@@ -176,7 +175,7 @@ def x_and_parameters_to_named_with_units(
         This allows the user to do a delayed import of the unit registry,
         which is important because pint's unit registries don't parallelise well.
 
-        If not provided, [`openscm_units.unit_registry`][] is used.
+        If not provided, [`pint.get_application_registry`][] is used.
 
     Returns
     -------
@@ -208,7 +207,9 @@ def x_and_parameters_to_named_with_units(
     ... )
     {'para_a': <Quantity(1.1, 'meter')>, 'pop_weight': <Quantity(3.2, 'thousands')>, 'factor': 4.0}
     """  # noqa: E501
-    unit_reg = get_unit_registry() if get_unit_registry else openscm_units.unit_registry
+    unit_reg = (
+        get_unit_registry() if get_unit_registry else pint.get_application_registry()
+    )
 
     out: dict[str, pint.registry.UnitRegistry.Quantity] = {}
     for val, (key, unit) in zip(x, params):

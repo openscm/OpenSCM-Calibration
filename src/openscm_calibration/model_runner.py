@@ -208,7 +208,7 @@ def x_and_parameters_to_named_with_units(
     {'para_a': <Quantity(1.1, 'meter')>, 'pop_weight': <Quantity(3.2, 'thousands')>, 'factor': 4.0}
     """  # noqa: E501
     unit_reg = (
-        get_unit_registry() if get_unit_registry else pint.get_application_registry()
+        get_unit_registry() if get_unit_registry else pint.get_application_registry()  # type: ignore
     )
 
     out: dict[str, pint.registry.UnitRegistry.Quantity] = {}

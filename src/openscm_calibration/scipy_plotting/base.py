@@ -232,7 +232,7 @@ class PlotTimeseriesLike(Protocol[DataContainer]):
             Other results to plot from iterations
 
         target
-            Target timeseries
+            Target to which we are calibrating
 
         convert_results_to_plot_dict
             Callable which converts the data into a dictionary
@@ -658,7 +658,9 @@ def get_ymax_default(
     r"""
     Get y-max based on costs
 
-    This is the default function used by :func:`plot_costs`. The algorithm is
+    This is the default function used by
+    [`plot_costs`][openscm_calibration.scipy_plotting.base.plot_costs].
+    The algorithm is
 
     .. math::
 

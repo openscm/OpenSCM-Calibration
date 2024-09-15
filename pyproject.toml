@@ -95,6 +95,10 @@ source = [
     "src",
 ]
 branch = true
+omit = [
+    # Covered by docs
+    "src/openscm_calibration/calibration_demo.py",
+]
 
 [tool.coverage.report]
 fail_under = 90

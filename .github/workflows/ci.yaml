@@ -34,6 +34,12 @@ jobs:
       - name: docs
         run: |
           pdm run mkdocs build --strict
+      - uses: ./.github/actions/setup
+        with:
+          python-version: "3.11"
+          pdm-dependency-install-flags: "-G docs -G :all -G dev"
+      - name: docs-with-changelog
+        run: |
           # Check CHANGELOG will build too
           pdm run towncrier build --yes
           pdm run mkdocs build --strict

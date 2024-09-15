@@ -220,7 +220,7 @@ class OptResStore(Generic[DataContainer]):
             Expected number of runs
 
         manager
-            Manager of lists (e.g. [`multiprocessing.managers.SyncManager`][])
+            Manager of lists (e.g. [`multiprocess.managers.SyncManager`][])
 
         params
             Names of the parameters that are being sampled

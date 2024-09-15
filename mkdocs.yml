@@ -73,6 +73,7 @@ plugins:
             - https://unidata.github.io/cftime/objects.inv
             - https://ipython.readthedocs.io/en/stable/objects.inv
             - https://matplotlib.org/stable/objects.inv
+            - https://multiprocess.readthedocs.io/en/stable/objects.inv
             - https://ncdata.readthedocs.io/en/stable/objects.inv
             - https://openscm-units.readthedocs.io/en/stable/objects.inv
             - https://pandas.pydata.org/docs/objects.inv

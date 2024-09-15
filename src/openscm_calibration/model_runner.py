@@ -90,6 +90,7 @@ class OptModelRunner(Generic[DataContainer_co]):
         params: Iterable[tuple[str, str | pint.Unit | None]],
         do_model_runs_input_generator: ModelRunsInputGenerator,
         do_model_runs: ModelRunner[DataContainer_co],
+        get_unit_registry: Callable[[], pint.UnitRegistry] | None = None,
     ) -> OptModelRunner[DataContainer_co]:
         """
         Initialise from list of parameters
@@ -109,6 +110,13 @@ class OptModelRunner(Generic[DataContainer_co]):
             Callable which does the model runs.
             See docstring of  `self` for more details.
 
+        get_unit_registry
+            Function to get unit registry.
+
+            Passed to
+            [`x_and_parameters_to_named_with_units`][openscm_calibration.model_runner.x_and_parameters_to_named_with_units].
+            See docstring of that function for further details.
+
         Returns
         -------
         :
@@ -117,6 +125,7 @@ class OptModelRunner(Generic[DataContainer_co]):
         convert_x_to_names_with_units = partial(
             x_and_parameters_to_named_with_units,
             params=params,
+            get_unit_registry=get_unit_registry,
         )
 
         return OptModelRunner(

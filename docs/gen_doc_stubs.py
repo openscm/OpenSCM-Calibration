@@ -106,6 +106,7 @@ def write_module_page(
         sub_packages = None
 
     package_name = package_full_name.split(".")[-1]
+
     write_file = get_write_file(package_full_name)
 
     nav[package_full_name.split(".")] = write_file.relative_to(

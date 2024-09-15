@@ -55,6 +55,7 @@ def test_run_model():
 def test_from_parameters_run_model(mock_get_params):
     x = [1.1, 1.9]
     parameters = [("a", "kg"), ("b", "m")]
+    get_unit_registry = "mocked"
 
     converted_paras = {"a": "res_here", "b": "res_there"}
     mock_get_params.return_value = converted_paras
@@ -70,11 +71,14 @@ def test_from_parameters_run_model(mock_get_params):
         parameters,
         mock_model_run_input_generator,
         mock_do_model_runs,
+        get_unit_registry,
     )
 
     res = runner.run_model(x)
 
-    mock_get_params.assert_called_with(x, params=parameters)
+    mock_get_params.assert_called_with(
+        x, params=parameters, get_unit_registry=get_unit_registry
+    )
     mock_model_run_input_generator.assert_called_with(**mock_get_params.return_value)
     mock_do_model_runs.assert_called_with(**mock_model_run_input_generator.return_value)
     assert res == mock_do_model_runs.return_value

@@ -46,10 +46,6 @@ from openscm_calibration.calibration_demo import (
     get_timeseries,
     plot_timeseries,
 )
-from openscm_calibration.emcee_utils import (
-    get_acceptance_fractions,
-    get_autocorrelation_info,
-)
 from openscm_calibration.minimize import to_minimize_full
 from openscm_calibration.model_runner import OptModelRunner
 from openscm_calibration.scipy_plotting import (
@@ -717,7 +713,6 @@ def log_prob(x) -> tuple[float, float, float]:
     Returns (negative) log probability of x,
     (negative) log likelihood of x based on the prior
     and (negative) log likelihood of x.
-
     """
     neg_ll_prior_x = neg_log_prior(x)
 
@@ -770,9 +765,6 @@ backend.reset(nwalkers, ndim)
 # please [create an issue](https://github.com/openscm/OpenSCM-Calibration/issues/new?assignees=&labels=feature&projects=&template=feature_request.md&title=).
 
 # %%
-assert False, "Split out plotting functions for MCMC"
-
-# %%
 # How many parallel process to use
 processes = 4
 
@@ -782,11 +774,11 @@ processes = 4
 # chains and then just running them for longer if needed.
 # This number is definitely too small.
 max_iterations = 125
-burnin = 10
+burnin = 25
 thin = 5
 
 ## Visualisation options
-plot_every = 15
+plot_every = 30
 convergence_ratio = 50
 parameter_order = [p[0] for p in parameters]
 neg_log_likelihood_name = "neg_ll"
@@ -829,6 +821,9 @@ with Pool(processes=processes) as pool:
         nwalkers,
         ndim,
         log_prob,
+        # Handy, but requires changes in other functions.
+        # One for the future.
+        # parameter_names=parameter_order,
         moves=move,
         backend=backend,
         blobs_dtype=[("neg_log_prior", float), ("neg_log_likelihood", float)],
@@ -837,106 +832,32 @@ with Pool(processes=processes) as pool:
 
     # Split this logic out too
     # (into some sort of iterator i.e. function with yield)
-    for sample in sampler.sample(
-        # If statement in case we're continuing a run rather than starting fresh
-        start_emcee if sampler.iteration < 1 else sampler.get_last_sample(),
+    # for step in oc_emcee_plotting.plot_emcee_progress
+    for step_info in oc_emcee_plotting.plot_emcee_progress(
+        sampler=sampler,
         iterations=max_iterations,
-        progress="notebook",
-        progress_kwargs={"leave": True},
+        burnin=burnin,
+        thin=thin,
+        plot_every=plot_every,
+        parameter_order=parameter_order,
+        neg_log_likelihood_name=neg_log_likelihood_name,
+        start=start_emcee if sampler.iteration < 1 else None,
+        holder_chain=holder_chain,
+        figure_chain=fig_chain,
+        axes_chain=axd_chain,
+        holder_dist=holder_dist,
+        figure_dist=fig_dist,
+        axes_dist=axd_dist,
+        holder_corner=holder_corner,
+        figure_corner=fig_corner,
+        holder_tau=holder_tau,
+        figure_tau=fig_tau,
+        ax_tau=ax_tau,
+        corner_kwargs=dict(truths=truths_corner),
     ):
-        min_samples_before_plot = 2
-        if (
-            sampler.iteration % plot_every
-            or sampler.iteration < min_samples_before_plot
-        ):
-            continue
+        print(f"{step_info.steps_post_burnin=}")
+        print(f"{step_info.acceptance_fraction=:.3f}")
 
-        if sampler.iteration < burnin + 1:
-            in_burn_in = True
-        else:
-            in_burn_in = False
-
-        # This goes in some sort of plotting helper,
-        # or simply into the call below (?)
-        for ax in axd_chain.values():
-            ax.clear()
-
-        oc_emcee_plotting.plot_chains(
-            inp=sampler,
-            burnin=burnin,
-            parameter_order=parameter_order,
-            axes_d=axd_chain,
-            neg_log_likelihood_name=neg_log_likelihood_name,
-        )
-        fig_chain.tight_layout()
-        holder_chain.update(fig_chain)
-
-        if not in_burn_in:
-            chain_post_burnin = sampler.get_chain(discard=burnin)
-            if chain_post_burnin.shape[0] > 0:
-                acceptance_fraction = np.mean(
-                    get_acceptance_fractions(chain_post_burnin)
-                )
-                print(
-                    f"{chain_post_burnin.shape[0]} steps post burnin, "
-                    f"acceptance fraction: {acceptance_fraction}"
-                )
-
-            for ax in axd_dist.values():
-                ax.clear()
-
-            oc_emcee_plotting.plot_dist(
-                inp=sampler,
-                burnin=burnin,
-                thin=thin,
-                parameter_order=parameter_order,
-                axes_d=axd_dist,
-                warn_singular=False,
-            )
-            fig_dist.tight_layout()
-            holder_dist.update(fig_dist)
-
-            try:
-                fig_corner.clear()
-                oc_emcee_plotting.plot_corner(
-                    inp=sampler,
-                    burnin=burnin,
-                    thin=thin,
-                    parameter_order=parameter_order,
-                    fig=fig_corner,
-                    truths=truths_corner,
-                )
-                fig_corner.tight_layout()
-                holder_corner.update(fig_corner)
-            except AssertionError:
-                pass
-
-            autocorr_bits = get_autocorrelation_info(
-                sampler,
-                burnin=burnin,
-                thin=thin,
-                autocorr_tol=0,
-                convergence_ratio=convergence_ratio,
-            )
-            autocorr[index] = autocorr_bits["autocorr"]
-            autocorr_steps[index] = sampler.iteration - burnin
-            index += 1
-
-            if np.sum(autocorr > 0) > 1 and np.sum(~np.isnan(autocorr)) > 1:
-                # plot autocorrelation, pretty specific to setup so haven't
-                # created separate function
-                ax_tau.clear()
-                ax_tau.plot(
-                    autocorr_steps[:index],
-                    autocorr[:index],
-                )
-                ax_tau.axline(
-                    (0, 0), slope=1 / convergence_ratio, color="k", linestyle="--"
-                )
-                ax_tau.set_ylabel("Mean tau")
-                ax_tau.set_xlabel("Number steps (post burnin)")
-                holder_tau.update(fig_tau)
-
-# Close all the figures
+# Close all the figures to avoid them appearing twice
 for _ in range(4):
     plt.close()

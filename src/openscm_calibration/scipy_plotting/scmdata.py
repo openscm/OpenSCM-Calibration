@@ -240,8 +240,8 @@ def plot_timeseries_scmrun(  # noqa: PLR0913,too-many-locals
         target_k = target_runs[k]
         target_k_unit = str(target_k.get_unique_meta("unit", True))
         if target_k_unit != model_unit:
-            # Avoidable user side, hence warn (see
-            # https://docs.python.org/3/howto/logging.html#when-to-use-logging)
+            # Avoidable user side, hence warn
+            # (see https://docs.python.org/3/howto/logging.html#when-to-use-logging)
             warn_msg = (
                 f"Converting target units ({target_k_unit!r}) "
                 f"to model output units ({model_unit!r}), "

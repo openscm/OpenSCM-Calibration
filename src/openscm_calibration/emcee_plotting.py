@@ -12,14 +12,28 @@ from typing import (
 )
 
 import numpy as np
+import numpy.typing as nptype
 
-from openscm_calibration.emcee_utils import get_labelled_chain_data
+from openscm_calibration.emcee_utils import (
+    ChainProgressInfo,
+    get_acceptance_fractions,
+    get_autocorrelation_info,
+    get_labelled_chain_data,
+    get_start,
+)
 from openscm_calibration.exceptions import MissingOptionalDependencyError
 
 if TYPE_CHECKING:
+    from collections.abc import Iterator
+
     import emcee
+    import IPython
     import matplotlib
     import matplotlib.axes
+    import matplotlib.figure
+
+DEFAULT_PROGRESS_KWARGS = {"leave": True}
+"""Default arguments to use for displaying progress bars"""
 
 
 def plot_chains(  # noqa: PLR0913
@@ -431,3 +445,334 @@ def plot_corner(  # noqa: PLR0913,too-many-locals
         label_kwargs=label_kwargs,
         **kwargs,
     )
+
+
+def plot_tau(  # noqa: PLR0913
+    ax: matplotlib.axes.Axes,
+    autocorr: nptype.NDArray[np.float64],
+    steps: nptype.NDArray[np.int64],
+    parameter_order: tuple[str, ...],
+    convergence_ratio: float,
+    convergence_ratio_line_kwargs: dict[str, Any] | None = None,
+    legend_loc: str | None = "lower right",
+    xlabel: str = "Number steps (post burnin)",
+    ylabel: str = "Autocorrelation time, tau",
+) -> None:
+    """
+    Plot the autocorrelation time, tau
+
+    Parameters
+    ----------
+    ax
+        Axes on which to plot
+
+    autocorr
+        Autocorrelation information.
+
+        This should be multi-dimensional,
+        with each column being the autocorrelation time for a different parameter.
+
+    steps
+        The number of steps taken before each row in `autocorr` was calculated.
+
+        In other words, the x-axis for the plot.
+
+    parameter_order
+        The order of the parameters in `autocorr`.
+
+    convergence_ratio
+        Convergence ratio (used to show the convergence line on the plot)
+
+    convergence_ratio_line_kwargs
+        Keyword arguments to pass to [`axline`][matplotlib.axes.Axes.axline]
+        when plotting the convergence ratio line.
+
+        If not supplied, we use `{"color": "k", "linestyle": "--"}`.
+
+    legend_loc
+        Location of the legend.
+
+        If `None`, we don't explicitly set the legend location.
+
+    xlabel
+        x-label to apply to the plot.
+
+    ylabel
+        y-label to apply to the plot.
+    """
+    if convergence_ratio_line_kwargs is None:
+        convergence_ratio_line_kwargs = {"color": "k", "linestyle": "--"}
+
+    ax.plot(
+        steps,
+        autocorr,
+        label=parameter_order,
+    )
+    ax.axline((0, 0), slope=1 / convergence_ratio, **convergence_ratio_line_kwargs)
+
+    if legend_loc is not None:
+        ax.legend(loc=legend_loc)
+
+    ax.set_xlabel(xlabel)
+    ax.set_ylabel(ylabel)
+
+
+# TODO: simplify this
+def plot_emcee_progress(  # noqa: PLR0913
+    sampler: emcee.ensemble.EnsembleSampler,
+    iterations: int,
+    burnin: int,
+    thin: int,
+    plot_every: int,
+    parameter_order: tuple[str, ...],
+    neg_log_likelihood_name: str,
+    holder_chain: IPython.core.display_functions.DisplayHandle,
+    figure_chain: matplotlib.figure.Figure,
+    axes_chain: dict[str, matplotlib.axes.Axes],
+    holder_dist: IPython.core.display_functions.DisplayHandle,
+    figure_dist: matplotlib.figure.Figure,
+    axes_dist: dict[str, matplotlib.axes.Axes],
+    holder_corner: IPython.core.display_functions.DisplayHandle,
+    figure_corner: matplotlib.figure.Figure,
+    holder_tau: IPython.core.display_functions.DisplayHandle,
+    figure_tau: matplotlib.figure.Figure,
+    ax_tau: matplotlib.axes.Axes,
+    start: nptype.NDArray[np.float64] | None = None,
+    sample_kwargs: dict[str, Any] | None = None,
+    progress: str | bool = "notebook",
+    progress_kwargs: dict[str, Any] | None = None,
+    min_samples_before_plot: int = 2,
+    corner_kwargs: dict[str, Any] | None = None,
+    convergence_ratio: float = 50,
+) -> Iterator[ChainProgressInfo]:
+    """
+    Plot MCMC progress
+
+    Parameters
+    ----------
+    sampler
+        Sampler used for sampling the posterior distribution
+
+    iterations
+        Number of iterations to perform
+
+    burnin
+        Burn-in to apply to the chains
+
+    thin
+        Thinning to apply to the chains
+
+    plot_every
+        How many steps to wait before updating the plots
+
+    parameter_order
+        Order of the parameters.
+
+        This is used for ensuring that the plots are labelled correctly.
+
+    neg_log_likelihood_name
+        Name to use for the negative log likelihood in plots
+
+    holder_chain
+        Holder of the figure that displays the chains
+
+    figure_chain
+        Figure that displays the chains
+
+    axes_chain
+        Axes on which to plot the chains.
+
+        Each parameter in `parameter_order` should be a key in `axes_chain`.
+
+    holder_dist
+        Holder of the figure that displays the parameter distributions
+
+    figure_dist
+        Figure that displays the parameter distributions
+
+    axes_dist
+        Axes on which to plot the parameter distributions.
+
+        Each parameter in `parameter_order` should be a key in `axes_dist`.
+
+    holder_corner
+        Holder of the figure that displays the corner plot
+
+    figure_corner
+        Figure that displays the corner plot
+
+    holder_tau
+        Holder of the figure that displays the autocorrelation
+
+    figure_tau
+        Figure that displays the autocorrelation
+
+    ax_tau
+        Axes on which to plot the autocorrelation
+
+    start
+        Starting point for the sampling.
+
+        Only required if the sampler has not performed iterations already.
+
+    sample_kwargs
+        Arguments to pass to `sampler.sample`.
+
+    progress
+        Whether to show a progress bar or not.
+
+        If this is a string, it must match the values supported by `sampler.sample`.
+
+    progress_kwargs
+        Arguments to pass to the progress bar, if used.
+
+    min_samples_before_plot
+        Minimum number of samples that must be taken before any plot can be made.
+
+    corner_kwargs
+        Passed to [`plot_corner`][openscm_calibration.emcee_plotting.plot_corner].
+
+    convergence_ratio
+        Ratio to use to check whether the chains have converged or not.
+
+        Passed to
+        [`get_autocorrelation_info`][openscm_calibration.emcee_utils.get_autocorrelation_info].
+
+    Yields
+    ------
+    :
+        Information about the chain's progress.
+
+        The yield occurs each time the plots are updated,
+        so can also be used as a way to perform other actions.
+    """
+    if sample_kwargs is None:
+        sample_kwargs = {}
+
+    if progress_kwargs is None:
+        progress_kwargs = DEFAULT_PROGRESS_KWARGS
+
+    if corner_kwargs is None:
+        corner_kwargs = {}
+
+    start_use = get_start(
+        sampler=sampler,
+        start=start,
+    )
+
+    # Stores for autocorrelation values
+    # (as a function of the number of steps performed).
+    # This reserves more memory than is needed,
+    # but it is so cheap for a plain array that we don't worry about it.
+    autocorr = np.zeros((iterations, sampler.ndim))
+    autocorr_steps = np.zeros(iterations)
+    autocorr_index = 0
+
+    # Helper function
+    def enough_autocorr_values_to_plot(autocorr: nptype.NDArray[np.float64]) -> bool:
+        """Check whether there is any auto-correlation information to plot"""
+        values_to_plot_present = np.logical_and(
+            autocorr > 0.0,  # noqa: PLR2004
+            np.logical_not(np.isnan(autocorr)),
+        )
+
+        return np.any(np.sum(values_to_plot_present, axis=0) > 1)
+
+    for sample in sampler.sample(
+        start_use,
+        iterations=iterations,
+        progress=progress,
+        progress_kwargs={"leave": True},
+        **sample_kwargs,
+    ):
+        if (
+            sampler.iteration % plot_every
+            or sampler.iteration < min_samples_before_plot
+        ):
+            continue
+
+        for ax in axes_chain.values():
+            ax.clear()
+
+        plot_chains(
+            inp=sampler,
+            burnin=burnin,
+            parameter_order=parameter_order,
+            axes_d=axes_chain,
+            neg_log_likelihood_name=neg_log_likelihood_name,
+        )
+        figure_chain.tight_layout()
+        holder_chain.update(figure_chain)
+
+        steps_post_burnin = max(0, sampler.iteration - burnin)
+        if steps_post_burnin < 1:
+            # In burn in
+            acceptance_fraction = np.nan
+
+        else:
+            chain_post_burnin = sampler.get_chain(discard=burnin)
+            acceptance_fraction = np.mean(get_acceptance_fractions(chain_post_burnin))
+
+            for ax in axes_dist.values():
+                ax.clear()
+
+                plot_dist(
+                    inp=sampler,
+                    burnin=burnin,
+                    thin=thin,
+                    parameter_order=parameter_order,
+                    axes_d=axes_dist,
+                    warn_singular=False,
+                )
+
+            figure_dist.tight_layout()
+            holder_dist.update(figure_dist)
+
+            # Not sure why this was wrapped in try-except in the notebooks.
+            # Might want to re-instate in future.
+            # try:
+            figure_corner.clear()
+            plot_corner(
+                inp=sampler,
+                burnin=burnin,
+                thin=thin,
+                parameter_order=parameter_order,
+                fig=figure_corner,
+                **corner_kwargs,
+            )
+            figure_corner.tight_layout()
+            holder_corner.update(figure_corner)
+            # except AssertionError:
+            #     pass
+
+            autocorr_bits = get_autocorrelation_info(
+                sampler,
+                burnin=burnin,
+                thin=thin,
+                convergence_ratio=convergence_ratio,
+            )
+
+            if autocorr_bits.any_non_nan_tau():
+                autocorr[autocorr_index, :] = autocorr_bits.tau
+                autocorr_steps[autocorr_index] = autocorr_bits.steps_post_burnin
+                autocorr_index += 1
+
+            if enough_autocorr_values_to_plot(autocorr):
+                ax_tau.clear()
+                plot_tau(
+                    ax=ax_tau,
+                    autocorr=autocorr[:autocorr_index, :],
+                    steps=autocorr_steps[:autocorr_index],
+                    parameter_order=parameter_order,
+                    convergence_ratio=convergence_ratio,
+                    convergence_ratio_line_kwargs=dict(color="k", linestyle="--"),
+                )
+
+                figure_tau.tight_layout()
+                holder_tau.update(figure_tau)
+
+        yield ChainProgressInfo(
+            steps=sampler.iteration,
+            steps_post_burnin=steps_post_burnin,
+            acceptance_fraction=acceptance_fraction,
+        )

@@ -193,14 +193,30 @@ def x_and_parameters_to_named_with_units(
     --------
     It also possible to inject a different registry as needed
     >>> import pint
+    >>>
+    >>> from openscm_calibration.parameter_handling import (
+    ...     ParameterDefinition,
+    ...     ParameterOrder,
+    ... )
+    >>>
     >>> ur_plus_pop = pint.UnitRegistry()
     >>> ur_plus_pop.define("thousands = [population]")
+    >>>
     >>> def get_ur_with_pop():
     ...     return ur_plus_pop
+    >>>
+    >>> para_order = ParameterOrder(
+    ...     (
+    ...         ParameterDefinition("para_a", "m"),
+    ...         ParameterDefinition("pop_weight", "thousands"),
+    ...         ParameterDefinition("factor", None),
+    ...     )
+    ... )
+    >>>
     >>> # Withoout the injection, an error is raised
     >>> x_and_parameters_to_named_with_units(
     ...     [1.1, 3.2],
-    ...     [("para_a", "m"), ("pop_weight", "thousands")],
+    ...     para_order,
     ... )
     Traceback (most recent call last):
     ...
@@ -208,7 +224,7 @@ def x_and_parameters_to_named_with_units(
     >>> # With the injection, this works nicely
     >>> x_and_parameters_to_named_with_units(
     ...     [1.1, 3.2, 4.0],
-    ...     [("para_a", "m"), ("pop_weight", "thousands"), ("factor", None)],
+    ...     para_order,
     ...     get_ur_with_pop,
     ... )
     {'para_a': <Quantity(1.1, 'meter')>, 'pop_weight': <Quantity(3.2, 'thousands')>, 'factor': 4.0}

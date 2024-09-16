@@ -112,14 +112,12 @@ def test_get_autocorrelation_info(  # noqa: PLR0913
     )
 
     steps_post_burnin = mock_iteration - burnin
-    autocorr = np.mean(mock_chain_autocor_times)
-    assert res == {
-        "tau": mock_chain_autocor_times,
-        "autocorr": autocorr,
-        "converged": steps_post_burnin > convergence_ratio_exp * autocorr,
-        "convergence_ratio": convergence_ratio_exp,
-        "steps_post_burnin": steps_post_burnin,
-    }
+    converged_exp = steps_post_burnin > convergence_ratio_exp * mock_chain_autocor_times
+
+    assert res.steps_post_burnin == steps_post_burnin
+    assert (res.tau == mock_chain_autocor_times).all()
+    assert res.convergence_ratio == convergence_ratio_exp
+    assert (res.converged == converged_exp).all()
 
 
 @pytest.mark.parametrize(

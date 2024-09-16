@@ -1,6 +1,6 @@
 [project]
 name = "openscm-calibration"
-version = "0.5.3a1"
+version = "0.6.0"
 description = "Calibration tools for simple climate models (with potential for applications elsewhere)"
 authors = [
     { name = "Zebedee Nicholls", email = "zebedee.nicholls@climate-energy-college.org" },

@@ -24,28 +24,36 @@
 
 # %%
 from functools import partial
+from typing import Callable
 
 import emcee
 import matplotlib.pyplot as plt
 import more_itertools
 import numpy as np
+import numpy.typing as nptype
 import pandas as pd
 import pint
 import scipy.integrate
 import scmdata.run
+from attrs import define
 from emcwrap import DIMEMove
 from multiprocess import Manager, Pool
 from openscm_units import unit_registry as UREG
 from tqdm.notebook import tqdm
 
-from openscm_calibration import emcee_plotting
+from openscm_calibration import emcee_plotting as oc_emcee_plotting
 from openscm_calibration.cost.scmdata import OptCostCalculatorSSE
 from openscm_calibration.emcee_utils import (
-    get_acceptance_fractions,
-    get_autocorrelation_info,
+    get_neg_log_prior,
+    neg_log_info,
 )
 from openscm_calibration.minimize import to_minimize_full
 from openscm_calibration.model_runner import OptModelRunner
+from openscm_calibration.parameter_handling import (
+    BoundDefinition,
+    ParameterDefinition,
+    ParameterOrder,
+)
 from openscm_calibration.scipy_plotting import (
     CallbackProxy,
     OptPlotter,
@@ -89,13 +97,16 @@ RNG = np.random.default_rng(seed=seed)
 # We are going to solve this system using
 # [scipy's solve initial value problem](https://docs.scipy.org/doc/scipy/reference/generated/scipy.integrate.solve_ivp.html).
 #
-# We want to support units,
-# so we implement this using [pint](https://pint.readthedocs.io/).
-# To make this work, we also have to define some wrappers.
-# We define these in this notebook to show you the full details.
-# If you find them distracting,
-# please [raise an issue](https://github.com/openscm/OpenSCM-Calibration/issues/new)
-# or submit a pull request.
+# Here we implement this using a setup which uses
+# [pint](https://pint.readthedocs.io/)
+# for unit support and
+# [scmdata](https://scmdata.readthedocs.io/en/latest)
+# for handling model output.
+# This means we have to define some wrappers too,
+# so that all the different data types can work with each other.
+# This is a bit of extra work,
+# but we think it is worth it to avoid the unit headaches
+# and we do it here so you can see how this could work with your own data containers.
 
 # %% [markdown]
 # ## Experiments
@@ -113,15 +124,45 @@ LENGTH_UNITS = "m"
 MASS_UNITS = "Pt"
 TIME_UNITS = "yr"
 time_axis = UREG.Quantity(np.arange(1850, 2000, 1), TIME_UNITS)
-mass = UREG.Quantity(100, MASS_UNITS)
+mass = UREG.Quantity(250, MASS_UNITS)
 
 
 # %%
-def do_experiments(
-    k: pint.Quantity, x_zero: pint.Quantity, beta: pint.Quantity
+@define
+class ExperimentDefinition:
+    """
+    Definition of an experiment to run
+    """
+
+    experiment_id: str
+    """ID of the experiment"""
+
+    dy_dt: Callable[
+        [nptype.NDArray[np.float64], nptype.NDArray[np.float64]],
+        nptype.NDArray[np.float64],
+    ]
+    """
+    The function which defines dy_dt(t, y)
+
+    This is what we solve.
+    """
+
+    x_0: pint.registry.UnitRegistry.Quantity
+    """Initial position of the mass"""
+
+    v_0: pint.registry.UnitRegistry.Quantity
+    """Initial velocity of the mass"""
+
+
+# %%
+def run_experiments(
+    k: float,
+    x_zero: float,
+    beta: float,
+    mass: float = mass,
 ) -> scmdata.run.BaseScmRun:
     """
-    Run model experiments
+    Run experiments for a given set of parameters
 
     Parameters
     ----------
@@ -134,25 +175,33 @@ def do_experiments(
     beta
         Damping constant [kg / s]
 
+    mass
+        Mass on the spring [kg]
+
     Returns
     -------
-        Results
+    :
+        Results of the experiments
     """
     # Avoiding pint conversions in the function actually
-    # being solved makes things much faster, but also
-    # harder to keep track of. We recommend starting with
-    # pint everywhere first, then optimising second (either
-    # via using numpy quantities throughout, optional numpy
-    # quantities using e.g. pint.wrap or using Fortran or
-    # C wrappers).
+    # being solved makes things much faster,
+    # but also harder to keep track of.
+    # We recommend starting with pint everywhere first,
+    # then optimising second
+    # (either via using numpy quantities throughout,
+    # or using Fortran or C wrappers).
+    # We don't recommend usint pint's `wraps` functionalities,
+    # because these don't place nice with parallelism.
     k_m = k.to(f"{MASS_UNITS} / {TIME_UNITS}^2").m
     x_zero_m = x_zero.to(LENGTH_UNITS).m
     beta_m = beta.to(f"{MASS_UNITS} / {TIME_UNITS}").m
     m_m = mass.to(MASS_UNITS).m
 
-    def to_solve(t: np.ndarray, y: np.ndarray) -> np.ndarray:
+    def to_solve(
+        t: nptype.NDArray[np.float64], y: nptype.NDArray[np.float64]
+    ) -> nptype.NDArray[np.float64]:
         """
-        Right-hand side of our equation i.e. dN/dt
+        Right-hand side of our equation i.e. dy/dt
 
         Parameters
         ----------
@@ -160,11 +209,12 @@ def do_experiments(
             time
 
         y
-            Current stat of the system
+            Current state of the system
 
         Returns
         -------
-            dN/dt
+        :
+            dy/dt
         """
         x = y[0]
         v = y[1]
@@ -177,26 +227,33 @@ def do_experiments(
         return out
 
     res = {}
+    # Grabbed out of global scope,
+    # not ideal but ok for this example.
     time_axis_m = time_axis.to(TIME_UNITS).m
-    for name, to_solve_l, x_start, v_start in (
-        (
-            "non-eqm-start",
-            to_solve,
-            UREG.Quantity(1.2, "m"),
-            UREG.Quantity(0, "m / s"),
+    for exp_definition in [
+        ExperimentDefinition(
+            experiment_id="non-eqm-start",
+            dy_dt=to_solve,
+            x_0=UREG.Quantity(1.8, "m"),
+            v_0=UREG.Quantity(0, "m / s"),
         ),
-        ("eqm-start", to_solve, x_zero, UREG.Quantity(0.3, "m / yr")),
-    ):
-        res[name] = scipy.integrate.solve_ivp(
-            to_solve_l,
+        ExperimentDefinition(
+            experiment_id="eqm-start",
+            dy_dt=to_solve,
+            x_0=UREG.Quantity(x_zero_m, LENGTH_UNITS),
+            v_0=UREG.Quantity(1.3, "m / yr"),
+        ),
+    ]:
+        res[exp_definition.experiment_id] = scipy.integrate.solve_ivp(
+            exp_definition.dy_dt,
             t_span=[time_axis_m[0], time_axis_m[-1]],
             y0=[
-                x_start.to(LENGTH_UNITS).m,
-                v_start.to(f"{LENGTH_UNITS} / {TIME_UNITS}").m,
+                exp_definition.x_0.to(LENGTH_UNITS).m,
+                exp_definition.v_0.to(f"{LENGTH_UNITS} / {TIME_UNITS}").m,
             ],
             t_eval=time_axis_m,
         )
-        if not res[name].success:
+        if not res[exp_definition.experiment_id].success:
             msg = "Model failed to solve"
             raise ValueError(msg)
 
@@ -231,12 +288,12 @@ def do_experiments(
 
 # %%
 truth = {
-    "k": UREG.Quantity(3000, "kg / s^2"),
-    "x_zero": UREG.Quantity(0.5, "m"),
-    "beta": UREG.Quantity(1e11, "kg / s"),
+    "k": UREG.Quantity(2100, "kg / s^2"),
+    "x_zero": UREG.Quantity(-0.5, "m"),
+    "beta": UREG.Quantity(6.3e11, "kg / s"),
 }
 
-target = do_experiments(**truth)
+target = run_experiments(**truth)
 target["model"] = "target"
 target.lineplot(time_axis="year-month")
 target
@@ -277,30 +334,56 @@ cost_calculator
 
 # %% [markdown]
 # Firstly, we define the parameters we're going to optimise.
-# This will be used to ensure a consistent order throughout.
+# This will be used to ensure a consistent order and units throughout.
+# We also define the bounds we're going to use here
+# because we need them later
+# (but we don't always have to provide bounds).
 
 # %%
-parameters = [
-    ("k", f"{MASS_UNITS} / {TIME_UNITS} ^ 2"),
-    ("x_zero", LENGTH_UNITS),
-    ("beta", f"{MASS_UNITS} / {TIME_UNITS}"),
-]
-parameters
+parameter_order = ParameterOrder(
+    (
+        ParameterDefinition(
+            "k",
+            f"{MASS_UNITS} / {TIME_UNITS} ^ 2",
+            BoundDefinition(
+                lower=UREG.Quantity(300.0, "kg / s^2"),
+                upper=UREG.Quantity(10000.0, "kg / s^2"),
+            ),
+        ),
+        ParameterDefinition(
+            "x_zero",
+            LENGTH_UNITS,
+            BoundDefinition(
+                lower=UREG.Quantity(-2, "m"),
+                upper=UREG.Quantity(2, "m"),
+            ),
+        ),
+        ParameterDefinition(
+            "beta",
+            f"{MASS_UNITS} / {TIME_UNITS}",
+            BoundDefinition(
+                lower=UREG.Quantity(1e10, "kg / s"),
+                upper=UREG.Quantity(1e12, "kg / s"),
+            ),
+        ),
+    )
+)
+parameter_order.names
 
 
 # %% [markdown]
 # Next we define a function which, given pint quantities,
-# returns the inputs needed for our `do_experiments` function.
+# returns the inputs needed for our `run_experiments` function.
 # In this case this is not a very interesting function,
 # but in other use cases the flexibility is helpful.
 
 
 # %%
-def do_model_runs_input_generator(
+def run_experiments_input_generator(
     k: pint.Quantity, x_zero: pint.Quantity, beta: pint.Quantity
 ) -> dict[str, pint.Quantity]:
     """
-    Create the inputs for :func:`do_experiments`
+    Create the inputs for `run_experiments`
 
     Parameters
     ----------
@@ -315,24 +398,19 @@ def do_model_runs_input_generator(
 
     Returns
     -------
-        Inputs for :func:`do_experiments`
+    :
+        Inputs for `run_experiments`
     """
     return {"k": k, "x_zero": x_zero, "beta": beta}
 
 
 # %%
-model_runner = OptModelRunner.from_parameters(
-    params=parameters,
-    do_model_runs_input_generator=do_model_runs_input_generator,
-    do_model_runs=do_experiments,
+model_runner = OptModelRunner.from_parameter_order(
+    parameter_order=parameter_order,
+    do_model_runs_input_generator=run_experiments_input_generator,
+    do_model_runs=run_experiments,
 )
 model_runner
-
-# %%
-import dill
-
-# %%
-dill.detect.baditems(model_runner)
 
 # %% [markdown]
 # Now we can run from a plain numpy array (like scipy will use)
@@ -359,41 +437,23 @@ start = np.array([4, 0.6, 2])
 start
 
 # %% [markdown]
-# For this optimisation, we must also define bounds for each parameter.
-
-# %%
-bounds_dict = {
-    "k": [
-        UREG.Quantity(300, "kg / s^2"),
-        UREG.Quantity(1e4, "kg / s^2"),
-    ],
-    "x_zero": [
-        UREG.Quantity(-2, "m"),
-        UREG.Quantity(2, "m"),
-    ],
-    "beta": [
-        UREG.Quantity(1e10, "kg / s"),
-        UREG.Quantity(1e12, "kg / s"),
-    ],
-}
-bounds_dict
-
-# %%
-bounds = [[v.to(unit).m for v in bounds_dict[k]] for k, unit in parameters]
-bounds
+# Now we're ready to run our optimisation.
 
 # %% [markdown]
-# Now we're ready to run our optimisation.
+# There are lots of choices that can be made during optimisation.
+# At the moment, we show how to change many of them in this documentation.
+# This does make the next cell somewhat overwhelming,
+# but it also shows you all the choices you have available.
+# As we do this more in future, we may create further abstractions.
+# If these would be helpful,
+# please [create an issue](https://github.com/openscm/OpenSCM-Calibration/issues/new?assignees=&labels=feature&projects=&template=feature_request.md&title=).
 
 # %%
 # Number of parallel processes to use
 processes = 4
 
-# Random seed (use if you want reproducibility)
-seed = 12849
 
 ## Optimisation parameters - here we use short runs
-## TODO: other repo with full runs
 # Tolerance to set for convergance
 atol = 1
 tol = 0.02
@@ -411,23 +471,25 @@ popsize = 4
 # There are also the strategy and init options
 # which might be needed for some problems
 
-# Maximum number of runs to store
-max_n_runs = (maxiter + 1) * popsize * len(parameters)
+## Maximum number of runs to store
+# We think this is the right way to calculate this.
+# If in doubt, you can always just increase this by some factor
+# (at the cost of potentially reserving more memory than you need).
+max_n_runs = (maxiter + 1) * popsize * len(parameter_order.parameters)
 
 
 # Visualisation options
 update_every = 4
 thin_ts_to_plot = 5
 
-
-# Create axes to plot on (could also be created as part of a factory
-# or class method)
+# Function for converting output into a dict of runs and axes to plot on
 convert_scmrun_to_plot_dict = partial(scmrun_as_dict, groups=["variable", "scenario"])
 
+# Create axes to plot on
 cost_name = "cost"
 timeseries_axes = list(convert_scmrun_to_plot_dict(target).keys())
 
-parameters_names = [v[0] for v in parameters]
+parameters_names = parameter_order.names
 parameters_mosiac = list(more_itertools.repeat_each(parameters_names, 1))
 timeseries_axes_mosiac = list(more_itertools.repeat_each(timeseries_axes, 1))
 
@@ -486,7 +548,7 @@ with Manager() as manager:
             # This could be wrapped up too
             optimize_res = scipy.optimize.differential_evolution(
                 to_minimize,
-                bounds,
+                parameter_order.bounds_m(),
                 maxiter=maxiter,
                 x0=start,
                 tol=tol,
@@ -519,17 +581,27 @@ optimize_res
 # %%
 # Here we imagine that we're polishing from the results of the DE above,
 # but we make the start slightly worse first
-start_local = optimize_res.x * 1.2
+start_local = optimize_res.x * 1.5
 start_local
+
+# %% [markdown]
+# As for global optimisation above,
+# there are lots of choices that can be made during optimisation
+# and we show how to change many of them in this documentation.
+# Once again, this can be somewhat overwhelming
+# and if you would find further abstractions helpful,
+# please [create an issue](https://github.com/openscm/OpenSCM-Calibration/issues/new?assignees=&labels=feature&projects=&template=feature_request.md&title=).
 
 # %%
 # Optimisation parameters
 tol = 1e-4
 # Maximum number of iterations to use
-maxiter = 30
+maxiter = 50
 
-# I think this is how this works
-max_n_runs = len(parameters) + 2 * maxiter
+# We think this is how this works.
+# As above, if you hit memory errors,
+# just increase this by some factor.
+max_n_runs = len(parameter_order.names) + 2 * maxiter
 
 # Lots of options here
 method = "Nelder-mead"
@@ -537,12 +609,11 @@ method = "Nelder-mead"
 # Visualisation options
 update_every = 10
 thin_ts_to_plot = 5
-parameters_names = [v[0] for v in parameters]
 
 # Create other objects
 store = OptResStore.from_n_runs(
     max_n_runs,
-    params=parameters_names,
+    params=parameter_order.names,
     add_iteration_to_res=add_iteration_to_res_scmrun,
 )
 to_minimize = partial(
@@ -554,12 +625,12 @@ to_minimize = partial(
 
 
 with tqdm(total=max_n_runs) as pbar:
-    # Here we use a class method which auto-generates the figure
-    # for us. This is just a convenience thing, it does the same
-    # thing as the previous example under the hood.
+    # Here we use a class method which auto-generates the figure for us.
+    # This is just a convenience thing,
+    # it does the same thing as the previous example under the hood.
     opt_plotter = OptPlotter.from_autogenerated_figure(
         cost_key=cost_name,
-        params=parameters_names,
+        params=parameter_order.names,
         convert_results_to_plot_dict=convert_scmrun_to_plot_dict,
         target=target,
         store=store,
@@ -611,55 +682,16 @@ optimize_res_local
 
 
 # %%
-def neg_log_prior_bounds(x: np.ndarray, bounds: np.ndarray) -> float:
-    """
-    Log prior that just checks proposal is in bounds
-
-    Parameters
-    ----------
-    x
-        Parameter array
-
-    bounds
-        Bounds for each parameter (must have same
-        order as x)
-    """
-    in_bounds = (x > bounds[:, 0]) & (x < bounds[:, 1])
-    if np.all(in_bounds):
-        return 0
-
-    return -np.inf
-
-
-neg_log_prior = partial(neg_log_prior_bounds, bounds=np.array(bounds))
-
-
-# %%
-def log_prob(x) -> tuple[float, float, float]:
-    """
-    Get log probability for a given parameter vector
-
-    Returns (negative) log probability of x,
-    (negative) log likelihood of x based on the prior
-    and (negative) log likelihood of x.
-
-    """
-    neg_ll_prior_x = neg_log_prior(x)
-
-    if not np.isfinite(neg_ll_prior_x):
-        return -np.inf, None, None
-
-    try:
-        model_results = model_runner.run_model(x)
-    except ValueError:
-        return -np.inf, None, None
-
-    sses = cost_calculator.calculate_cost(model_results)
-    neg_ll_x = -sses / 2
-    neg_log_prob = neg_ll_x + neg_ll_prior_x
-
-    return neg_log_prob, neg_ll_prior_x, neg_ll_x
-
+neg_log_prior = get_neg_log_prior(
+    parameter_order,
+    kind="uniform",
+)
+neg_log_info = partial(
+    neg_log_info,
+    neg_log_prior=neg_log_prior,
+    model_runner=model_runner,
+    negative_log_likelihood_calculator=cost_calculator,
+)
 
 # %% [markdown]
 # We're using the DIME proposal from [emcwrap](https://github.com/gboehl/emcwrap).
@@ -667,7 +699,7 @@ def log_prob(x) -> tuple[float, float, float]:
 # so requires less fine tuning and is less sensitive to the starting point.
 
 # %%
-ndim = len(bounds)
+ndim = len(parameter_order.names)
 # emcwrap docs suggest 5 * ndim
 nwalkers = 5 * ndim
 
@@ -681,6 +713,14 @@ move = DIMEMove()
 filename = "how-to-run-a-calibration-scmdata-mcmc.h5"
 backend = emcee.backends.HDFBackend(filename)
 backend.reset(nwalkers, ndim)
+
+# %% [markdown]
+# As for global and local optimisation above,
+# there are lots of choices that can be made during MCMC
+# and we show how to change many of them in this documentation.
+# Once again, this can be somewhat overwhelming
+# and if you would find further abstractions helpful,
+# please [create an issue](https://github.com/openscm/OpenSCM-Calibration/issues/new?assignees=&labels=feature&projects=&template=feature_request.md&title=).
 
 # %%
 # How many parallel process to use
@@ -698,14 +738,8 @@ thin = 2
 ## Visualisation options
 plot_every = 15
 convergence_ratio = 50
-parameter_order = [p[0] for p in parameters]
 neg_log_likelihood_name = "neg_ll"
-labels_chain = [neg_log_likelihood_name, *parameter_order]
-
-# Stores for autocorr over steps
-autocorr = np.zeros(max_iterations)
-autocorr_steps = np.zeros(max_iterations)
-index = 0
+labels_chain = [neg_log_likelihood_name, *parameter_order.names]
 
 ## Setup plots
 fig_chain, axd_chain = plt.subplot_mosaic(
@@ -715,7 +749,7 @@ fig_chain, axd_chain = plt.subplot_mosaic(
 holder_chain = display(fig_chain, display_id=True)  # noqa: F821 # used in a notebook
 
 fig_dist, axd_dist = plt.subplot_mosaic(
-    mosaic=[[parameter] for parameter in parameter_order],
+    mosaic=[[parameter] for parameter in parameter_order.names],
     figsize=(10, 5),
 )
 holder_dist = display(fig_dist, display_id=True)  # noqa: F821 # used in a notebook
@@ -731,117 +765,49 @@ fig_tau, ax_tau = plt.subplots(
 holder_tau = display(fig_tau, display_id=True)  # noqa: F821 # used in a notebook
 
 # Plottting helper
-truths_corner = [truth[k].to(u).m for k, u in parameters]
+truths_corner = [
+    truth[parameter.name].to(parameter.unit).m
+    for parameter in parameter_order.parameters
+]
 
 with Pool(processes=processes) as pool:
     sampler = emcee.EnsembleSampler(
         nwalkers,
         ndim,
-        log_prob,
+        log_prob_fn=neg_log_info,
+        # Could be handy, but requires changes in other functions.
+        # One for the future.
+        # parameter_names=parameter_order,
         moves=move,
         backend=backend,
         blobs_dtype=[("neg_log_prior", float), ("neg_log_likelihood", float)],
         pool=pool,
     )
 
-    for sample in sampler.sample(
-        # If statement in case we're continuing a run rather than starting fresh
-        start_emcee if sampler.iteration < 1 else sampler.get_last_sample(),
+    for step_info in oc_emcee_plotting.plot_emcee_progress(
+        sampler=sampler,
         iterations=max_iterations,
-        progress="notebook",
-        progress_kwargs={"leave": True},
+        burnin=burnin,
+        thin=thin,
+        plot_every=plot_every,
+        parameter_order=parameter_order.names,
+        neg_log_likelihood_name=neg_log_likelihood_name,
+        start=start_emcee if sampler.iteration < 1 else None,
+        holder_chain=holder_chain,
+        figure_chain=fig_chain,
+        axes_chain=axd_chain,
+        holder_dist=holder_dist,
+        figure_dist=fig_dist,
+        axes_dist=axd_dist,
+        holder_corner=holder_corner,
+        figure_corner=fig_corner,
+        holder_tau=holder_tau,
+        figure_tau=fig_tau,
+        ax_tau=ax_tau,
+        corner_kwargs=dict(truths=truths_corner),
     ):
-        min_samples_before_plot = 2
-        if (
-            sampler.iteration % plot_every
-            or sampler.iteration < min_samples_before_plot
-        ):
-            continue
+        print(f"{step_info.steps_post_burnin=}. {step_info.acceptance_fraction=:.3f}")
 
-        if sampler.iteration < burnin + 1:
-            in_burn_in = True
-        else:
-            in_burn_in = False
-
-        for ax in axd_chain.values():
-            ax.clear()
-
-        emcee_plotting.plot_chains(
-            inp=sampler,
-            burnin=burnin,
-            parameter_order=parameter_order,
-            axes_d=axd_chain,
-            neg_log_likelihood_name=neg_log_likelihood_name,
-        )
-        fig_chain.tight_layout()
-        holder_chain.update(fig_chain)
-
-        if not in_burn_in:
-            chain_post_burnin = sampler.get_chain(discard=burnin)
-            if chain_post_burnin.shape[0] > 0:
-                acceptance_fraction = np.mean(
-                    get_acceptance_fractions(chain_post_burnin)
-                )
-                print(
-                    f"{chain_post_burnin.shape[0]} steps post burnin, "
-                    f"acceptance fraction: {acceptance_fraction}"
-                )
-
-            for ax in axd_dist.values():
-                ax.clear()
-
-            emcee_plotting.plot_dist(
-                inp=sampler,
-                burnin=burnin,
-                thin=thin,
-                parameter_order=parameter_order,
-                axes_d=axd_dist,
-                warn_singular=False,
-            )
-            fig_dist.tight_layout()
-            holder_dist.update(fig_dist)
-
-            try:
-                fig_corner.clear()
-                emcee_plotting.plot_corner(
-                    inp=sampler,
-                    burnin=burnin,
-                    thin=thin,
-                    parameter_order=parameter_order,
-                    fig=fig_corner,
-                    truths=truths_corner,
-                )
-                fig_corner.tight_layout()
-                holder_corner.update(fig_corner)
-            except AssertionError:
-                pass
-
-            autocorr_bits = get_autocorrelation_info(
-                sampler,
-                burnin=burnin,
-                thin=thin,
-                autocorr_tol=0,
-                convergence_ratio=convergence_ratio,
-            )
-            autocorr[index] = autocorr_bits["autocorr"]
-            autocorr_steps[index] = sampler.iteration - burnin
-            index += 1
-
-            if np.sum(autocorr > 0) > 1 and np.sum(~np.isnan(autocorr)) > 1:
-                # plot autocorrelation, pretty specific to setup so haven't
-                # created separate function
-                ax_tau.clear()
-                ax_tau.plot(
-                    autocorr_steps[:index],
-                    autocorr[:index],
-                )
-                ax_tau.axline(
-                    (0, 0), slope=1 / convergence_ratio, color="k", linestyle="--"
-                )
-                ax_tau.set_ylabel("Mean tau")
-                ax_tau.set_xlabel("Number steps (post burnin)")
-                holder_tau.update(fig_tau)
-
-# Close all the figures
+# Close all the figures to avoid them appearing twice
 for _ in range(4):
     plt.close()

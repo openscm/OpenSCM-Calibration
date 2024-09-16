@@ -257,3 +257,26 @@ class OptCostCalculatorSSE:
         cost = float((diff.convert_unit("1") ** 2).values.sum().sum())
 
         return cost
+
+    def calculate_negative_log_likelihood(
+        self,
+        model_results: scmdata.run.BaseScmRun,
+    ) -> float:
+        """
+        Calculate the negative log likelihood of a given set of results
+
+        Parameters
+        ----------
+        model_results
+            Model results for which to calculate the negative log likelihood
+
+        Returns
+        -------
+        :
+            Negative log likelihood (up to an additive constant)
+        """
+        sses = self.calculate_cost(model_results)
+        # TODO: find the proof of this
+        negative_log_likelihood = -sses / 2
+
+        return negative_log_likelihood

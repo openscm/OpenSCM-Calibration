@@ -8,19 +8,21 @@ in the many places where the order and units are not checked by the receiving fu
 
 from __future__ import annotations
 
-from typing import Generic, TypeVar, overload
+from typing import TYPE_CHECKING, Generic, TypeVar, Union, overload
 
 import attr
 import numpy as np
 import numpy.typing as nptype
 import pint
 from attrs import define, field
-from typing_extensions import TypeAlias
 
-SupportedBoundsTypes: TypeAlias = (
-    float | np.float64 | pint.registry.UnitRegistry.Quantity
-)
-BoundsValue = TypeVar("BoundsValue", bound=SupportedBoundsTypes)
+if TYPE_CHECKING:
+    from typing_extensions import TypeAlias
+
+    SupportedBoundsTypes: TypeAlias = Union[
+        float, np.float64, pint.registry.UnitRegistry.Quantity
+    ]
+    BoundsValue = TypeVar("BoundsValue", bound=SupportedBoundsTypes)
 
 
 @define

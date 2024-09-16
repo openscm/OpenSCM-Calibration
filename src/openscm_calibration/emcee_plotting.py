@@ -37,9 +37,9 @@ DEFAULT_PROGRESS_KWARGS = {"leave": True}
 
 
 def plot_chains(  # noqa: PLR0913
-    inp: emcee.backends.Backend,
+    inp: emcee.backends.Backend | emcee.ensemble.EnsembleSampler,
     burnin: int,
-    parameter_order: list[str],
+    parameter_order: tuple[str, ...],
     neg_log_likelihood_name: str,
     axes_d: dict[str, matplotlib.axes.Axes],
     get_neg_log_likelihood_ylim: Callable[
@@ -237,10 +237,10 @@ def get_neg_log_likelihood_ylim_default(
 
 
 def plot_dist(  # noqa: PLR0913
-    inp: emcee.backends.Backend,
+    inp: emcee.backends.Backend | emcee.ensemble.EnsembleSampler,
     burnin: int,
     thin: int,
-    parameter_order: list[str],
+    parameter_order: tuple[str, ...],
     axes_d: dict[str, matplotlib.axes.Axes],
     common_norm: bool = False,
     fill: bool = True,
@@ -334,10 +334,10 @@ starting point
 
 
 def plot_corner(  # noqa: PLR0913,too-many-locals
-    inp: emcee.backends.Backend,
+    inp: emcee.backends.Backend | emcee.ensemble.EnsembleSampler,
     burnin: int,
     thin: int,
-    parameter_order: list[str],
+    parameter_order: tuple[str, ...],
     fig: matplotlib.figure.Figure,
     bins: int = 30,
     plot_contours: bool = True,
@@ -665,7 +665,7 @@ def plot_emcee_progress(  # noqa: PLR0913
     # This reserves more memory than is needed,
     # but it is so cheap for a plain array that we don't worry about it.
     autocorr = np.zeros((iterations, sampler.ndim))
-    autocorr_steps = np.zeros(iterations)
+    autocorr_steps = np.zeros(iterations, dtype=np.int64)
     autocorr_index = 0
 
     # Helper function
@@ -676,7 +676,7 @@ def plot_emcee_progress(  # noqa: PLR0913
             np.logical_not(np.isnan(autocorr)),
         )
 
-        return np.any(np.sum(values_to_plot_present, axis=0) > 1)
+        return bool(np.any(np.sum(values_to_plot_present, axis=0) > 1))
 
     for sample in sampler.sample(
         start_use,
@@ -702,7 +702,7 @@ def plot_emcee_progress(  # noqa: PLR0913
             neg_log_likelihood_name=neg_log_likelihood_name,
         )
         figure_chain.tight_layout()
-        holder_chain.update(figure_chain)
+        holder_chain.update(figure_chain)  # type: ignore
 
         steps_post_burnin = max(0, sampler.iteration - burnin)
         if steps_post_burnin < 1:
@@ -711,7 +711,9 @@ def plot_emcee_progress(  # noqa: PLR0913
 
         else:
             chain_post_burnin = sampler.get_chain(discard=burnin)
-            acceptance_fraction = np.mean(get_acceptance_fractions(chain_post_burnin))
+            acceptance_fraction = float(
+                np.mean(get_acceptance_fractions(chain_post_burnin))
+            )
 
             for ax in axes_dist.values():
                 ax.clear()
@@ -726,7 +728,7 @@ def plot_emcee_progress(  # noqa: PLR0913
                 )
 
             figure_dist.tight_layout()
-            holder_dist.update(figure_dist)
+            holder_dist.update(figure_dist)  # type: ignore
 
             # Not sure why this was wrapped in try-except in the notebooks.
             # Might want to re-instate in future.
@@ -741,7 +743,7 @@ def plot_emcee_progress(  # noqa: PLR0913
                 **corner_kwargs,
             )
             figure_corner.tight_layout()
-            holder_corner.update(figure_corner)
+            holder_corner.update(figure_corner)  # type: ignore
             # except AssertionError:
             #     pass
 
@@ -769,7 +771,7 @@ def plot_emcee_progress(  # noqa: PLR0913
                 )
 
                 figure_tau.tight_layout()
-                holder_tau.update(figure_tau)
+                holder_tau.update(figure_tau)  # type: ignore
 
         yield ChainProgressInfo(
             steps=sampler.iteration,

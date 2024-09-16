@@ -12,7 +12,7 @@ from __future__ import annotations
 
 from collections import defaultdict
 from collections.abc import Iterable
-from typing import TYPE_CHECKING, Any, Callable
+from typing import TYPE_CHECKING, Callable
 
 import numpy as np
 import pint
@@ -54,11 +54,10 @@ class CostCalculator:
         :
             Cost function value
         """
-        sses_experiment_l = []
-
         model_result_dict = model_results.to_dict()
         target_dict = self.target.to_dict()
 
+        sses = 0.0
         for experiment_id in model_result_dict:
             model_result_exp = model_result_dict[experiment_id]
             target_exp = target_dict[experiment_id]
@@ -74,9 +73,8 @@ class CostCalculator:
                 model_result_exp.values - target_exp.values
             ) / self.normalisation
             diff_squared = diff_normalised**2
-            sses_experiment_l.append(diff_squared.sum())
 
-        sses = np.sum(sses_experiment_l)
+            sses += diff_squared.sum()
 
         return sses
 
@@ -113,13 +111,6 @@ class Timeseries:
 
     values: pint.registry.UnitRegistry.Quantity
     """The timeseries value at each point in time"""
-
-    def __eq__(self, other: Any) -> bool:
-        """Check if object is equal to another"""
-        if other.__class__ is not self.__class__:
-            return NotImplemented
-
-        return (self.time == other.time).all() and (self.values == other.values).all()
 
 
 @define
@@ -183,7 +174,8 @@ class ExperimentResultCollection:
         for result in self.results:
             values = result.result.values
             if value_unit is not None:
-                values = values.to(value_unit)
+                # pint weirdness causing type hinting issues
+                values = values.to(value_unit)  # type: ignore
 
             df_r = pd.DataFrame(
                 values.m,
@@ -234,6 +226,8 @@ class ExperimentResultCollection:
         ax.set_ylabel(f"[{y_units}]")
         ax.set_xlabel(f"[{x_units}]")
 
+        return ax
+
 
 def add_iteration_info(
     res: ExperimentResultCollection, iteration: int
@@ -281,7 +275,6 @@ def plot_timeseries(  # noqa: PLR0913
     timeseries_keys: Iterable[str],
     axes: dict[str, matplotlib.axes.Axes],
     get_timeseries: Callable[[ExperimentResultCollection], pd.DataFrame],
-    unit: str = "m",
 ) -> None:
     """
     Plot timeseries
@@ -310,9 +303,6 @@ def plot_timeseries(  # noqa: PLR0913
     get_timeseries
         Function which converts the data into a
         [`pandas.DataFrame`][] for plotting
-
-    unit
-        Unit to use for the y-axis of the plot
     """
     others_to_plot_dict = defaultdict(list)
     for res in others_to_plot:
@@ -328,7 +318,7 @@ def plot_timeseries(  # noqa: PLR0913
 
         others_to_plot_k = others_to_plot_dict[k]
         for other_to_plot in others_to_plot_k:
-            get_timeseries(other_to_plot, value_unit=unit).plot.line(
+            get_timeseries(other_to_plot).plot.line(
                 ax=ax,
                 legend=False,
                 linewidth=0.5,
@@ -338,7 +328,7 @@ def plot_timeseries(  # noqa: PLR0913
             )
 
         target_k = target_dict[k]
-        get_timeseries(target_k, value_unit=unit).plot.line(
+        get_timeseries(target_k).plot.line(
             ax=ax,
             legend=False,
             linewidth=2,
@@ -348,7 +338,7 @@ def plot_timeseries(  # noqa: PLR0913
         )
 
         best_k = best_dict[k]
-        get_timeseries(best_k, value_unit=unit).plot.line(
+        get_timeseries(best_k).plot.line(
             ax=ax,
             legend=False,
             linewidth=2,

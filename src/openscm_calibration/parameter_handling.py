@@ -8,21 +8,23 @@ in the many places where the order and units are not checked by the receiving fu
 
 from __future__ import annotations
 
-from typing import TypeVar
+from typing import Generic, TypeVar, overload
 
 import attr
 import numpy as np
 import numpy.typing as nptype
 import pint
 from attrs import define, field
+from typing_extensions import TypeAlias
 
-BoundsValue = TypeVar(
-    "BoundsValue", float, np.float64, pint.registry.UnitRegistry.Quantity
+SupportedBoundsTypes: TypeAlias = (
+    float | np.float64 | pint.registry.UnitRegistry.Quantity
 )
+BoundsValue = TypeVar("BoundsValue", bound=SupportedBoundsTypes)
 
 
 @define
-class BoundDefinition:
+class BoundDefinition(Generic[BoundsValue]):
     """Definition of bounds for a parameter"""
 
     lower: BoundsValue = field()
@@ -33,7 +35,7 @@ class BoundDefinition:
 
     @upper.validator
     def check_greather_than_lower(
-        instance: BoundDefinition,
+        instance: BoundDefinition[BoundsValue],
         attribute: attr.Attribute[pint.registry.UnitRegistry.Quantity],
         value: pint.registry.UnitRegistry.Quantity,
     ) -> None:
@@ -47,7 +49,7 @@ class BoundDefinition:
 
 
 @define
-class ParameterDefinition:
+class ParameterDefinition(Generic[BoundsValue]):
     """Definition of a parameter"""
 
     name: str
@@ -60,14 +62,20 @@ class ParameterDefinition:
     If this is `None`, we assume that no units apply to the parameter.
     """
 
-    bounds: BoundDefinition | None = None
+    bounds: BoundDefinition[BoundsValue] | None = None
     """The bounds for the parameter"""
+
+    @overload
+    def bounds_m(self, unit: None = None) -> tuple[BoundsValue, BoundsValue]:
+        ...
+
+    @overload
+    def bounds_m(self, unit: str) -> tuple[float, float]:
+        ...
 
     def bounds_m(
         self, unit: str | None = None
-    ) -> tuple[
-        pint.registry.UnitRegistry.Quantity, pint.registry.UnitRegistry.Quantity
-    ]:
+    ) -> tuple[BoundsValue, BoundsValue] | tuple[float, float]:
         """
         Get the magnitude of `self.bounds`
 
@@ -95,18 +103,22 @@ class ParameterDefinition:
             raise ValueError(msg)
 
         if self.unit is None:
-            return tuple([v for v in [self.bounds.lower, self.bounds.upper]])
+            return (self.bounds.lower, self.bounds.upper)
 
         unit_h = unit if unit is not None else self.unit
 
-        return tuple([v.to(unit_h).m for v in [self.bounds.lower, self.bounds.upper]])
+        return (
+            # Use type ignores because pint's error message is clear enough
+            self.bounds.lower.to(unit_h).m,  # type: ignore[union-attr]
+            self.bounds.upper.to(unit_h).m,  # type: ignore[union-attr]
+        )
 
 
 @define
 class ParameterOrder:
     """Parameter order definition"""
 
-    parameters: tuple[ParameterDefinition, ...]
+    parameters: tuple[ParameterDefinition[SupportedBoundsTypes], ...]
     """
     Parameters
 

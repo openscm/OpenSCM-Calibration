@@ -25,6 +25,7 @@ if TYPE_CHECKING:
     from typing import Any
 
     import emcee.backends
+    import emcee.ensemble
 
 
 SupportsLikelihoodCalculation: TypeAlias = Callable[[nptype.NDArray[np.float64]], float]
@@ -239,7 +240,7 @@ class ChainProgressInfo:
 
 
 def get_acceptance_fractions(
-    chains: nptype.NDArray[np.float64],
+    chains: nptype.NDArray[np.floating[Any] | np.integer[Any]],
 ) -> nptype.NDArray[np.float64]:
     """
     Get acceptance fraction in each chain of an MCMC ensemble of chains
@@ -295,7 +296,7 @@ class AutoCorrelationInfo:
     [`get_autocorrelation_info`][openscm_calibration.emcee_utils.get_autocorrelation_info].
     """
 
-    converged: tuple[bool, ...]
+    converged: nptype.NDArray[np.bool]  # noqa: NPY001 # have to use np type for type hinting
     """
     Whether, based on `convergence_ratio`, the chains for each parameter have converged
 
@@ -315,11 +316,11 @@ class AutoCorrelationInfo:
         :
             Whether any of the tau values are non-nan
         """
-        return np.any(np.logical_not(np.isnan(self.tau)))
+        return bool(np.any(np.logical_not(np.isnan(self.tau))))
 
 
 def get_autocorrelation_info(
-    inp: emcee.backends.Backend,
+    inp: emcee.backends.Backend | emcee.ensemble.EnsembleSampler,
     burnin: int,
     thin: int = 1,
     autocorr_tol: int = 0,
@@ -375,8 +376,8 @@ def get_autocorrelation_info(
 
 
 def get_labelled_chain_data(
-    inp: emcee.backends.Backend,
-    parameter_order: list[str],
+    inp: emcee.backends.Backend | emcee.ensemble.EnsembleSampler,
+    parameter_order: tuple[str, ...],
     neg_log_likelihood_name: str | None = None,
     burnin: int = 0,
     thin: int = 0,

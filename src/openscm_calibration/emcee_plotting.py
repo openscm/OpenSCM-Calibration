@@ -503,11 +503,13 @@ def plot_tau(  # noqa: PLR0913
     if convergence_ratio_line_kwargs is None:
         convergence_ratio_line_kwargs = {"color": "k", "linestyle": "--"}
 
-    ax.plot(
-        steps,
-        autocorr,
-        label=parameter_order,
-    )
+    for i, parameter in enumerate(parameter_order):
+        ax.scatter(
+            steps,
+            autocorr[:, i],
+            label=parameter,
+        )
+
     ax.axline((0, 0), slope=1 / convergence_ratio, **convergence_ratio_line_kwargs)
 
     if legend_loc is not None:

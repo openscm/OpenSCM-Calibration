@@ -96,6 +96,9 @@ source = [
 ]
 branch = true
 omit = [
+    # Covered by docs at the moment, but should probably be independently tested
+    "src/openscm_calibration/emcee_plotting.py",
+    "src/openscm_calibration/parameter_handling.py",
     # Covered by docs
     "src/openscm_calibration/calibration_demo.py",
 ]

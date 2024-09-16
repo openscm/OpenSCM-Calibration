@@ -48,6 +48,11 @@ from openscm_calibration.calibration_demo import (
 )
 from openscm_calibration.minimize import to_minimize_full
 from openscm_calibration.model_runner import OptModelRunner
+from openscm_calibration.parameter_handling import (
+    BoundDefinition,
+    ParameterDefinition,
+    ParameterOrder,
+)
 from openscm_calibration.scipy_plotting import (
     CallbackProxy,
     OptPlotter,
@@ -366,18 +371,44 @@ assert cost_calculator.calculate_cost(not_target) > 0
 # %% [markdown]
 # Firstly, we define the parameters we're going to optimise.
 # This will be used to ensure a consistent order and units throughout.
+# We also define the bounds we're going to use here
+# because we need them later
+# (but we don't always have to provide bounds).
 
 # %%
-parameters = [
-    ("k", f"{MASS_UNITS} / {TIME_UNITS} ^ 2"),
-    ("x_zero", LENGTH_UNITS),
-    ("beta", f"{MASS_UNITS} / {TIME_UNITS}"),
-]
-parameters
+parameter_order = ParameterOrder(
+    (
+        ParameterDefinition(
+            "k",
+            f"{MASS_UNITS} / {TIME_UNITS} ^ 2",
+            BoundDefinition(
+                lower=UREG.Quantity(300.0, "kg / s^2"),
+                upper=UREG.Quantity(10000.0, "kg / s^2"),
+            ),
+        ),
+        ParameterDefinition(
+            "x_zero",
+            LENGTH_UNITS,
+            BoundDefinition(
+                lower=UREG.Quantity(-2, "m"),
+                upper=UREG.Quantity(2, "m"),
+            ),
+        ),
+        ParameterDefinition(
+            "beta",
+            f"{MASS_UNITS} / {TIME_UNITS}",
+            BoundDefinition(
+                lower=UREG.Quantity(1e10, "kg / s"),
+                upper=UREG.Quantity(1e12, "kg / s"),
+            ),
+        ),
+    )
+)
+parameter_order.names
 
 # %%
-model_runner = OptModelRunner.from_parameters(
-    params=parameters,
+model_runner = OptModelRunner.from_parameter_order(
+    parameter_order=parameter_order,
     do_model_runs_input_generator=do_model_runs_input_generator,
     do_model_runs=run_experiments,
 )
@@ -406,27 +437,6 @@ cost_calculator.calculate_cost(model_runner.run_model([3, 0.5, 3]))
 # %%
 start = np.array([4, 0.6, 2])
 start
-
-# %% [markdown]
-# For this optimisation, we must also define bounds for each parameter.
-
-# %%
-bounds_dict = {
-    "k": [
-        UREG.Quantity(300, "kg / s^2"),
-        UREG.Quantity(1e4, "kg / s^2"),
-    ],
-    "x_zero": [
-        UREG.Quantity(-2, "m"),
-        UREG.Quantity(2, "m"),
-    ],
-    "beta": [
-        UREG.Quantity(1e10, "kg / s"),
-        UREG.Quantity(1e12, "kg / s"),
-    ],
-}
-bounds = [[v.to(unit).m for v in bounds_dict[k]] for k, unit in parameters]
-bounds_dict
 
 # %% [markdown]
 # Now we're ready to run our optimisation.
@@ -467,7 +477,7 @@ popsize = 4
 # We think this is the right way to calculate this.
 # If in doubt, you can always just increase this by some factor
 # (at the cost of potentially reserving more memory than you need).
-max_n_runs = (maxiter + 1) * popsize * len(parameters)
+max_n_runs = (maxiter + 1) * popsize * len(parameter_order.parameters)
 
 
 # Visualisation options
@@ -478,11 +488,10 @@ thin_ts_to_plot = 5
 # Create axes to plot on
 cost_name = "cost"
 timeseries_axes = list(convert_results_to_plot_dict(target).keys())
-parameters_names = [v[0] for v in parameters]
 
 mosaic = get_optimisation_mosaic(
     cost_key=cost_name,
-    params=parameters_names,
+    params=parameter_order.names,
     timeseries=timeseries_axes,
     cost_col_relwidth=2,
     n_parameters_per_row=3,
@@ -499,7 +508,7 @@ with Manager() as manager:
     store = OptResStore.from_n_runs_manager(
         max_n_runs,
         manager,
-        params=parameters_names,
+        params=parameter_order.names,
         add_iteration_to_res=add_iteration_info,
     )
 
@@ -518,7 +527,7 @@ with Manager() as manager:
                 fig=fig,
                 axes=axd,
                 cost_key=cost_name,
-                parameters=parameters_names,
+                parameters=parameter_order.names,
                 timeseries_axes=timeseries_axes,
                 target=target,
                 store=store,
@@ -544,7 +553,7 @@ with Manager() as manager:
 
             optimize_res = scipy.optimize.differential_evolution(
                 to_minimize,
-                bounds,
+                parameter_order.bounds_m(),
                 maxiter=maxiter,
                 x0=start,
                 tol=tol,
@@ -580,7 +589,7 @@ optimize_res
 # %%
 # Here we imagine that we're polishing from the results of the DE above,
 # but we make the start slightly worse first
-start_local = optimize_res.x * 1.3
+start_local = optimize_res.x * 1.5
 start_local
 
 # %% [markdown]
@@ -595,25 +604,24 @@ start_local
 # Optimisation parameters
 tol = 1e-4
 # Maximum number of iterations to use
-maxiter = 100
+maxiter = 50
 
 # We think this is how this works.
 # As above, if you hit memory errors,
 # just increase this by some factor.
-max_n_runs = len(parameters) + 2 * maxiter
+max_n_runs = len(parameter_order.names) + 2 * maxiter
 
 # Lots of options here
 method = "Nelder-mead"
 
 # Visualisation options
-update_every = 20
+update_every = 5
 thin_ts_to_plot = 5
-parameters_names = [v[0] for v in parameters]
 
 # Create other objects
 store = OptResStore.from_n_runs(
     max_n_runs,
-    params=parameters_names,
+    params=parameter_order.names,
     add_iteration_to_res=add_iteration_info,
 )
 to_minimize = partial(
@@ -630,7 +638,7 @@ with tqdman.tqdm(total=max_n_runs) as pbar:
     # thing as the previous example under the hood.
     opt_plotter = OptPlotter.from_autogenerated_figure(
         cost_key=cost_name,
-        params=parameters_names,
+        params=parameter_order.names,
         convert_results_to_plot_dict=convert_results_to_plot_dict,
         target=target,
         store=store,
@@ -682,58 +690,19 @@ optimize_res_local
 
 
 # %%
-def neg_log_prior_bounds(x: np.ndarray, bounds: np.ndarray) -> float:
-    """
-    Log prior that just checks proposal is in bounds
-
-    Parameters
-    ----------
-    x
-        Parameter array
-
-    bounds
-        Bounds for each parameter (must have same
-        order as x)
-    """
-    in_bounds = (x > bounds[:, 0]) & (x < bounds[:, 1])
-    if np.all(in_bounds):
-        return 0
-
-    return -np.inf
-
-
-neg_log_prior = partial(neg_log_prior_bounds, bounds=np.array(bounds))
-
+from openscm_calibration.emcee_utils import get_neg_log_prior, neg_log_info
 
 # %%
-def log_prob(x) -> tuple[float, float, float]:
-    """
-    Get log probability for a given parameter vector
-
-    Returns (negative) log probability of x,
-    (negative) log likelihood of x based on the prior
-    and (negative) log likelihood of x.
-    """
-    neg_ll_prior_x = neg_log_prior(x)
-
-    if not np.isfinite(neg_ll_prior_x):
-        return -np.inf, None, None
-
-    try:
-        model_results = model_runner.run_model(x)
-    except ValueError:
-        return -np.inf, None, None
-
-    sses = cost_calculator.calculate_cost(model_results)
-    neg_ll_x = -sses / 2
-    neg_log_prob = neg_ll_x + neg_ll_prior_x
-
-    return neg_log_prob, neg_ll_prior_x, neg_ll_x
-
-
-# %%
-assert False, "put neg_log_prior_bounds in package and check names against emcee docs"
-assert False, "put log_prob in package and check names against emcee docs"
+neg_log_prior = get_neg_log_prior(
+    parameter_order,
+    kind="uniform",
+)
+neg_log_info = partial(
+    neg_log_info,
+    neg_log_prior=neg_log_prior,
+    model_runner=model_runner,
+    negative_log_likelihood_calculator=cost_calculator,
+)
 
 # %% [markdown]
 # We're using the DIME proposal from [emcwrap](https://github.com/gboehl/emcwrap).
@@ -741,7 +710,7 @@ assert False, "put log_prob in package and check names against emcee docs"
 # so requires less fine tuning and is less sensitive to the starting point.
 
 # %%
-ndim = len(bounds)
+ndim = len(parameter_order.names)
 # emcwrap docs suggest 5 * ndim
 nwalkers = 5 * ndim
 
@@ -773,16 +742,15 @@ processes = 4
 # the posterior appropriately, normally requires looking at the
 # chains and then just running them for longer if needed.
 # This number is definitely too small.
-max_iterations = 125
+max_iterations = 200
 burnin = 25
 thin = 5
 
 ## Visualisation options
 plot_every = 30
 convergence_ratio = 50
-parameter_order = [p[0] for p in parameters]
 neg_log_likelihood_name = "neg_ll"
-labels_chain = [neg_log_likelihood_name, *parameter_order]
+labels_chain = [neg_log_likelihood_name, *parameter_order.names]
 
 # Stores for autocorrelation values
 # (as a function of the number of steps performed).
@@ -798,7 +766,7 @@ fig_chain, axd_chain = plt.subplot_mosaic(
 holder_chain = display(fig_chain, display_id=True)  # noqa: F821 # used in a notebook
 
 fig_dist, axd_dist = plt.subplot_mosaic(
-    mosaic=[[parameter] for parameter in parameter_order],
+    mosaic=[[parameter] for parameter in parameter_order.names],
     figsize=(10, 5),
 )
 holder_dist = display(fig_dist, display_id=True)  # noqa: F821 # used in a notebook
@@ -814,13 +782,16 @@ fig_tau, ax_tau = plt.subplots(
 holder_tau = display(fig_tau, display_id=True)  # noqa: F821 # used in a notebook
 
 # Plottting helper
-truths_corner = [truth[k].to(u).m for k, u in parameters]
+truths_corner = [
+    truth[parameter.name].to(parameter.unit).m
+    for parameter in parameter_order.parameters
+]
 
 with Pool(processes=processes) as pool:
     sampler = emcee.EnsembleSampler(
         nwalkers,
         ndim,
-        log_prob,
+        log_prob_fn=neg_log_info,
         # Handy, but requires changes in other functions.
         # One for the future.
         # parameter_names=parameter_order,
@@ -839,7 +810,7 @@ with Pool(processes=processes) as pool:
         burnin=burnin,
         thin=thin,
         plot_every=plot_every,
-        parameter_order=parameter_order,
+        parameter_order=parameter_order.names,
         neg_log_likelihood_name=neg_log_likelihood_name,
         start=start_emcee if sampler.iteration < 1 else None,
         holder_chain=holder_chain,
@@ -855,8 +826,7 @@ with Pool(processes=processes) as pool:
         ax_tau=ax_tau,
         corner_kwargs=dict(truths=truths_corner),
     ):
-        print(f"{step_info.steps_post_burnin=}")
-        print(f"{step_info.acceptance_fraction=:.3f}")
+        print(f"{step_info.steps_post_burnin=}. {step_info.acceptance_fraction=:.3f}")
 
 # Close all the figures to avoid them appearing twice
 for _ in range(4):

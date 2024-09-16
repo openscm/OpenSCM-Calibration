@@ -4,64 +4,19 @@ Minimisation helpers
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Protocol
+from typing import TYPE_CHECKING
 
 import numpy as np
 
 from openscm_calibration.store import OptResStore
 from openscm_calibration.typing import (
     DataContainer,
-    DataContainer_co,
-    DataContainer_contra,
+    SupportsCostCalculation,
+    SupportsModelRun,
 )
 
 if TYPE_CHECKING:
     from typing import Any
-
-
-class SupportsCostCalculation(Protocol[DataContainer_contra]):
-    """
-    Class that supports cost calculations
-    """
-
-    def calculate_cost(self, model_results: DataContainer_contra) -> float:
-        """
-        Calculate cost function
-
-        Parameters
-        ----------
-        model_results
-            Model results for which to calculate the cost
-
-        Returns
-        -------
-        :
-            Cost function value
-        """
-
-
-class SupportsModelRun(Protocol[DataContainer_co]):
-    """
-    Class that supports model runs
-    """
-
-    def run_model(
-        self,
-        x: np.typing.NDArray[np.number[Any]],
-    ) -> DataContainer_co:
-        """
-        Calculate cost function
-
-        Parameters
-        ----------
-        x
-            Parameter values
-
-        Returns
-        -------
-        :
-            Results of model run
-        """
 
 
 def to_minimize_full(

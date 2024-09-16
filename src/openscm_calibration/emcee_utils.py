@@ -5,10 +5,19 @@ Helpers for emcee
 from __future__ import annotations
 
 import warnings
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Callable, Literal
 
 import numpy as np
+import numpy.typing as nptype
 from attrs import define
+from typing_extensions import TypeAlias
+
+from openscm_calibration.parameter_handling import ParameterOrder
+from openscm_calibration.typing import (
+    DataContainer,
+    SupportsModelRun,
+    SupportsNegativeLogLikelihoodCalculation,
+)
 
 if TYPE_CHECKING:
     # See here for explanation of this pattern and why we don't need quotes
@@ -16,7 +25,138 @@ if TYPE_CHECKING:
     from typing import Any
 
     import emcee.backends
-    import numpy.typing as nptype
+
+
+SupportsLikelihoodCalculation: TypeAlias = Callable[[nptype.NDArray[np.float64]], float]
+
+
+def get_neg_log_prior(
+    parameter_order: ParameterOrder,
+    kind: Literal["uniform"] = "uniform",
+) -> SupportsLikelihoodCalculation:
+    """
+    Get a function for calculating the negative log prior
+
+    Parameters
+    ----------
+    parameter_order
+        The parameters being calibrated
+
+    kind
+        The kind of log prior to create.
+
+        Options:
+
+        - "uniform": a uniform prior within the bounds for each parameter
+
+    Returns
+    -------
+    :
+        Function that, given a parameter vector, returns the negative log prior
+    """
+    if kind == "uniform":
+        bounds = np.array(
+            [parameter.bounds_m() for parameter in parameter_order.parameters]
+        )
+
+        def neg_log_prior(x: nptype.NDArray[np.float64]) -> float:
+            """
+            Get log prior for a given parameter vector, `x`
+
+            This was generated in `get_neg_log_prior_from_bounds`
+            and assumes a uniform distribution for parameters
+            within their bounds.
+
+            Future uses must match the bounds order provided to
+            `get_neg_log_prior_from_bounds`.
+
+            Parameters
+            ----------
+            x
+                Parameter vector.
+
+            Returns
+            -------
+            :
+                Negative log prior of `x`
+            """
+            in_bounds = (x > bounds[:, 0]) & (x < bounds[:, 1])
+            if np.all(in_bounds):
+                return 0
+
+            return -np.inf
+
+    else:
+        raise NotImplementedError(kind)
+
+    return neg_log_prior
+
+
+def neg_log_info(
+    x: nptype.NDArray[np.float64],
+    neg_log_prior: Callable[[nptype.NDArray[np.float64]], float],
+    model_runner: SupportsModelRun[DataContainer],
+    negative_log_likelihood_calculator: SupportsNegativeLogLikelihoodCalculation[
+        DataContainer
+    ],
+) -> tuple[float, float, float | None]:
+    """
+    Get negative log probability and likelihood information
+
+    Specifically, negative log probability, log prior and log likelihood
+    for a given parameter vector.
+
+    Parameters
+    ----------
+    x
+        Parameter vector.
+
+        Be careful with the order and units of parameters.
+        No checks of parameter order or units are performed in this function.
+
+    neg_log_prior
+        Function that calculates the negative log prior for a given value of `x`
+
+    model_runner
+        Runner of the model for a given value of `x`
+
+    negative_log_likelihood_calculator
+        Calculator of negative log likelihood based on the outputs of the model run
+
+    Returns
+    -------
+    :
+        Negative log probability of `x`,
+        negative log prior of `x`
+        and negative log likelihood of `x`.
+
+        If the negative log probability of `x` is `-np.inf`,
+        then no likelihood calculation is performed
+        and `None` is returned for the negative log likelihood of `x`.
+
+        If the log likelihood calculation raises a `ValueError`,
+        we assume that the likelihood calculation failed
+        and return `-np.inf` for the log probability
+        and negative log likelihood of `x`.
+    """
+    neg_log_prior_x = neg_log_prior(x)
+
+    if not np.isfinite(neg_log_prior_x):
+        return -np.inf, neg_log_prior_x, None
+
+    try:
+        model_results = model_runner.run_model(x)
+    except ValueError:
+        return -np.inf, neg_log_prior_x, -np.inf
+
+    neg_log_likelihood_x = (
+        negative_log_likelihood_calculator.calculate_negative_log_likelihood(
+            model_results
+        )
+    )
+    neg_log_prob = neg_log_prior_x + neg_log_likelihood_x
+
+    return neg_log_prob, neg_log_prior_x, neg_log_likelihood_x
 
 
 def get_start(

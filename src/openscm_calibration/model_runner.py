@@ -4,7 +4,6 @@ Model runner class
 
 from __future__ import annotations
 
-from collections.abc import Iterable
 from functools import partial
 from typing import Any, Callable, Generic, Protocol
 
@@ -12,6 +11,7 @@ import numpy as np
 import pint
 from attrs import define
 
+from openscm_calibration.parameter_handling import ParameterOrder
 from openscm_calibration.typing import DataContainer_co
 
 
@@ -85,22 +85,22 @@ class OptModelRunner(Generic[DataContainer_co]):
     """
 
     @classmethod
-    def from_parameters(
+    def from_parameter_order(
         cls,
-        params: Iterable[tuple[str, str | pint.Unit | None]],
+        parameter_order: ParameterOrder,
         do_model_runs_input_generator: ModelRunsInputGenerator,
         do_model_runs: ModelRunner[DataContainer_co],
         get_unit_registry: Callable[[], pint.UnitRegistry] | None = None,
     ) -> OptModelRunner[DataContainer_co]:
         """
-        Initialise from list of parameters
+        Initialise from a parameter order definition
 
         This is a convenience method
 
         Parameters
         ----------
-        params
-            List of parameters
+        parameter_order
+            Parameter order from which to initialise
 
         do_model_runs_input_generator
             Generator of input for `do_model_runs`.
@@ -124,7 +124,7 @@ class OptModelRunner(Generic[DataContainer_co]):
         """
         convert_x_to_names_with_units = partial(
             x_and_parameters_to_named_with_units,
-            params=params,
+            parameter_order=parameter_order,
             get_unit_registry=get_unit_registry,
         )
 
@@ -162,7 +162,7 @@ class OptModelRunner(Generic[DataContainer_co]):
 
 def x_and_parameters_to_named_with_units(
     x: np.typing.NDArray[np.number[Any]],
-    params: Iterable[tuple[str, str | pint.Unit | None]],
+    parameter_order: ParameterOrder,
     get_unit_registry: Callable[[], pint.UnitRegistry] | None = None,
 ) -> dict[str, pint.registry.UnitRegistry.Quantity]:
     """
@@ -173,11 +173,8 @@ def x_and_parameters_to_named_with_units(
     x
         Vector of calibration parameter values
 
-    params
-        parameters to be calibrated
-
-        This defines both the names and units of the parameters.
-        If the units are `None`, the values are assumed to be plain numpy quantities.
+    parameter_order
+        Definition of the (expected) order of the parameters
 
     get_unit_registry
         Function to get unit registry.
@@ -221,12 +218,12 @@ def x_and_parameters_to_named_with_units(
     )
 
     out: dict[str, pint.registry.UnitRegistry.Quantity] = {}
-    for val, (key, unit) in zip(x, params):
-        if unit is not None:
-            val_out = unit_reg.Quantity(val, unit)
+    for val, parameter in zip(x, parameter_order.parameters):
+        if parameter.unit is not None:
+            val_out = unit_reg.Quantity(val, parameter.unit)
         else:
             val_out = val
 
-        out[key] = val_out
+        out[parameter.name] = val_out
 
     return out

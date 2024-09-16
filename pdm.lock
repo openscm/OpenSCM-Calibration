@@ -5,7 +5,7 @@
 groups = ["default", "dev", "docs", "plots", "scmdata", "tests"]
 strategy = ["inherit_metadata"]
 lock_version = "4.5.0"
-content_hash = "sha256:363a2c33db52281ee923f863bdd50f1b673cb03bba2bd6cb6b3ba3ce761da8e0"
+content_hash = "sha256:9ccc201a202b0c899409e3225e4af485bbfc752d6a338c83ab83cf73a49599f0"
 
 [[metadata.targets]]
 requires_python = ">=3.9"
@@ -3300,13 +3300,13 @@ files = [
 
 [[package]]
 name = "setuptools"
-version = "75.0.0"
+version = "75.1.0"
 requires_python = ">=3.8"
 summary = "Easily download, build, install, upgrade, and uninstall Python packages"
 groups = ["dev", "docs"]
 files = [
-    {file = "setuptools-75.0.0-py3-none-any.whl", hash = "sha256:791ae94f04f78c880b5e614e560dd32d4b4af5d151bd9e7483e3377846caf90a"},
-    {file = "setuptools-75.0.0.tar.gz", hash = "sha256:25af69c809d9334cd8e653d385277abeb5a102dca255954005a7092d282575ea"},
+    {file = "setuptools-75.1.0-py3-none-any.whl", hash = "sha256:35ab7fd3bcd95e6b7fd704e4a1539513edad446c097797f2985e0e4b960772f2"},
+    {file = "setuptools-75.1.0.tar.gz", hash = "sha256:d59a21b17a275fb872a9c3dae73963160ae079f1049ed956880cd7c09b120538"},
 ]
 
 [[package]]

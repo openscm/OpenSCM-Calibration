@@ -9,9 +9,10 @@ license = {text = "BSD-3-Clause"}
 requires-python = ">=3.9"
 dependencies = [
     "attrs",
-    "more-itertools~=10.5",
+    "more-itertools",
     "numpy",
     "pint",
+    "typing-extensions",
 ]
 readme = "README.md"
 classifiers = [

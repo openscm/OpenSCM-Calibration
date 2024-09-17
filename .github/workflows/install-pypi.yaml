@@ -73,7 +73,7 @@ jobs:
       if: matrix.os == 'windows-latest'
       run: |
         chcp 65001  # use utf-8
-        python -c 'import openscm_calibration; f = open("version.txt", "w"); f.write(f"INSTALLED_VERSION=v{{ % endraw %}{{ project_name_python }}.__version__{% raw %}}"); f.close()'
+        python -c 'import openscm_calibration; f = open("version.txt", "w"); f.write(f"INSTALLED_VERSION=v{openscm_calibration.__version__}"); f.close()'
         echo "Showing version.txt"
         type version.txt
         type version.txt >> $env:GITHUB_ENV

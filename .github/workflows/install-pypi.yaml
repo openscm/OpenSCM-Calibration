@@ -24,8 +24,31 @@ jobs:
       matrix:
         os: ["ubuntu-latest", "macos-latest", "windows-latest"]
         python-version: [ "3.9", "3.10", "3.11" ]
-        # Check both 'library' install and the 'application' (i.e. locked) install
-        install-target: ["openscm-calibration", "openscm-calibration[locked]"]
+        # Check 'library' install,
+        # 'library' install with all extras
+        # and the 'application' (i.e. locked) install
+        install-target: [
+          "openscm-calibration",
+          "openscm-calibration[locked]",
+          "openscm-calibration[plots,scmdata]",
+        ]
+      # Check installation with extras too, but not for all operating systems
+      include:
+        - os: ubuntu-latest
+          python-version: 3.11
+          install-target: "openscm-calibration[plots]"
+        - os: ubuntu-latest
+          python-version: 3.11
+          install-target: "openscm-calibration[plots-locked]"
+        - os: ubuntu-latest
+          python-version: 3.11
+          install-target: "openscm-calibration[scmdata]"
+        - os: ubuntu-latest
+          python-version: 3.11
+          install-target: "openscm-calibration[scmdata-locked]"
+        - os: ubuntu-latest
+          python-version: 3.11
+          install-target: "openscm-calibration[plots-locked,scmdata-locked]"
     steps:
     - name: Set up Python "${{ matrix.python-version }}"
       id: setup-python

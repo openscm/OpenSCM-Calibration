@@ -21,6 +21,13 @@ from the examples given in that link.
 
 <!-- towncrier release notes start -->
 
+## OpenSCM Calibration v0.6.1 (2024-09-17)
+
+### 🔧 Trivial/Internal Changes
+
+- [#32](https://github.com/openscm/OpenSCM-Calibration/pull/32)
+
+
 ## OpenSCM Calibration v0.6.0 (2024-09-16)
 
 ### ⚠️  Breaking Changes

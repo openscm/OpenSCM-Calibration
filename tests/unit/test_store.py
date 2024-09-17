@@ -12,8 +12,6 @@ import pytest
 
 from openscm_calibration.store import OptResStore
 
-multiprocess = pytest.importorskip("multiprocess")
-
 
 @pytest.fixture()
 def dummy_res():
@@ -551,6 +549,8 @@ def test_from_n_runs_manager(n_runs, dummy_parameters):
 
 @pytest.mark.parametrize("n_runs", (3, 5, 23))
 def test_from_n_runs_manager_multiprocess(n_runs, dummy_parameters):
+    multiprocess = pytest.importorskip("multiprocess")
+
     exp_res = [None] * n_runs
     exp_avail_indices = list(range(n_runs))[::-1]
 

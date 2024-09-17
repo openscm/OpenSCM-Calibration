@@ -9,9 +9,10 @@ from unittest.mock import MagicMock, Mock, PropertyMock, call, patch
 import numpy as np
 import numpy.testing as npt
 import pytest
-from multiprocess import Manager
 
 from openscm_calibration.store import OptResStore
+
+multiprocess = pytest.importorskip("multiprocess")
 
 
 @pytest.fixture()
@@ -553,7 +554,7 @@ def test_from_n_runs_manager_multiprocess(n_runs, dummy_parameters):
     exp_res = [None] * n_runs
     exp_avail_indices = list(range(n_runs))[::-1]
 
-    with Manager() as manager:
+    with multiprocess.Manager() as manager:
         init = OptResStore.from_n_runs_manager(
             n_runs, manager=manager, params=dummy_parameters, add_iteration_to_res=None
         )

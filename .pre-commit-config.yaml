@@ -49,11 +49,11 @@ repos:
       # Put requirements.txt files in the repo too
       - id: pdm-export
         name: export-requirements
-        args: ["-o", "requirements.txt", "--without-hashes", "--prod"]
+        args: ["-o", "requirements-locked.txt", "--without-hashes", "--prod"]
       - id: pdm-export
         name: export-requirements-optional
-        args: ["-o", "requirements-incl-optional.txt", "--without-hashes", "--prod", "-G", ":all"]
+        args: ["-o", "requirements-incl-optional-locked.txt", "--without-hashes", "--prod", "-G", ":all"]
       - id: pdm-export
         name: export-requirements-docs
-        args: ["-o", "requirements-docs.txt", "--without-hashes", "-G", ":all", "-G", "docs"]
+        args: ["-o", "requirements-docs-locked.txt", "--without-hashes", "-G", ":all", "-G", "docs"]
       - id: pdm-sync

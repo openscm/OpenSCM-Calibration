@@ -296,7 +296,7 @@ class AutoCorrelationInfo:
     [`get_autocorrelation_info`][openscm_calibration.emcee_utils.get_autocorrelation_info].
     """
 
-    converged: nptype.NDArray[np.bool]  # noqa: NPY001 # have to use np type for type hinting
+    converged: nptype.NDArray[np.bool]
     """
     Whether, based on `convergence_ratio`, the chains for each parameter have converged
 

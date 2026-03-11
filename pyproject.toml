@@ -8,11 +8,12 @@ authors = [
 license = {text = "BSD-3-Clause"}
 requires-python = ">=3.9"
 dependencies = [
-    "attrs",
-    "more-itertools",
-    "numpy",
-    "pint",
-    "typing-extensions",
+    "attrs>=22.1.0",
+    "more-itertools>=10.0",
+    "numpy>=1.26.0; python_version < '3.13'",
+    "numpy>=2.1.0; python_version >= '3.13'",
+    "pint>=0.20",
+    "typing-extensions>=4.0",
 ]
 readme = "README.md"
 classifiers = [

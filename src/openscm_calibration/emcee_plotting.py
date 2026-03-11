@@ -674,7 +674,7 @@ def plot_emcee_progress(  # noqa: PLR0913
     def enough_autocorr_values_to_plot(autocorr: nptype.NDArray[np.float64]) -> bool:
         """Check whether there is any auto-correlation information to plot"""
         values_to_plot_present = np.logical_and(
-            autocorr > 0.0,  # noqa: PLR2004
+            autocorr > 0.0,
             np.logical_not(np.isnan(autocorr)),
         )
 

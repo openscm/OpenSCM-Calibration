@@ -66,12 +66,10 @@ class ParameterDefinition(Generic[BoundsValue]):
     """The bounds for the parameter"""
 
     @overload
-    def bounds_m(self, unit: None = None) -> tuple[BoundsValue, BoundsValue]:
-        ...
+    def bounds_m(self, unit: None = None) -> tuple[BoundsValue, BoundsValue]: ...
 
     @overload
-    def bounds_m(self, unit: str) -> tuple[float, float]:
-        ...
+    def bounds_m(self, unit: str) -> tuple[float, float]: ...
 
     def bounds_m(
         self, unit: str | None = None

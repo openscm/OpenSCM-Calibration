@@ -22,7 +22,7 @@ class AlignmentError(ValueError):
     Raised when our data's metadata does not align as expected
     """
 
-    def __init__(  # noqa: PLR0913
+    def __init__(
         self,
         name_left: str,
         val_left: pd.DataFrame | pd.Series[Any],

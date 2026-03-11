@@ -2944,6 +2944,7 @@ plots = [
     { name = "seaborn" },
 ]
 scmdata = [
+    { name = "pint-pandas" },
     { name = "scmdata" },
 ]
 
@@ -3282,17 +3283,18 @@ tests-min = [
 [package.metadata]
 requires-dist = [
     { name = "attrs", specifier = ">=22.1.0" },
-    { name = "corner", marker = "extra == 'plots'", specifier = "~=2.0" },
-    { name = "ipython", marker = "extra == 'plots'", specifier = "~=8.18" },
-    { name = "matplotlib", marker = "extra == 'plots'", specifier = "~=3.7" },
+    { name = "corner", marker = "extra == 'plots'", specifier = ">=2.0" },
+    { name = "ipython", marker = "extra == 'plots'", specifier = ">=8.18" },
+    { name = "matplotlib", marker = "extra == 'plots'", specifier = ">=3.7" },
     { name = "more-itertools", specifier = ">=10.0" },
     { name = "numpy", marker = "python_full_version < '3.13'", specifier = ">=1.26.0" },
     { name = "numpy", marker = "python_full_version >= '3.13'", specifier = ">=2.1.0" },
     { name = "openscm-calibration", extras = ["plots"], marker = "extra == 'full'" },
-    { name = "pandas", marker = "extra == 'plots'", specifier = "~=2.2" },
+    { name = "pandas", marker = "extra == 'plots'", specifier = ">=2.2" },
     { name = "pint", specifier = ">=0.20" },
-    { name = "scmdata", marker = "extra == 'scmdata'", specifier = "~=0.17" },
-    { name = "seaborn", marker = "extra == 'plots'", specifier = "~=0.13" },
+    { name = "pint-pandas", marker = "extra == 'scmdata'", specifier = ">=0.5" },
+    { name = "scmdata", marker = "extra == 'scmdata'", specifier = ">=0.17" },
+    { name = "seaborn", marker = "extra == 'plots'", specifier = ">=0.13" },
     { name = "typing-extensions", specifier = ">=4.0" },
 ]
 provides-extras = ["plots", "scmdata", "full"]

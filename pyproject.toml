@@ -43,14 +43,16 @@ Issues = "https://github.com/openscm/OpenSCM-Calibration/issues"
 
 [project.optional-dependencies]
 plots = [
-    "corner~=2.0",
-    "ipython~=8.18",
-    "matplotlib~=3.7",
-    "pandas~=2.2",
-    "seaborn~=0.13",
+    "corner>=2.0",
+    "ipython>=8.18",
+    "matplotlib>=3.7",
+    "pandas>=2.2",
+    "seaborn>=0.13",
 ]
 scmdata = [
-    "scmdata~=0.17",
+    # scmdata pinning is wrong, hence need this
+    "pint-pandas>=0.5",
+    "scmdata>=0.17",
 ]
 full = [
     "openscm-calibration[plots]",

@@ -10,6 +10,7 @@ See https://oprypin.github.io/mkdocs-literate-nav/
     - [How to run a calibration with scmdata](how-to-guides/how-to-run-a-calibration-scmdata.py)
 - [Tutorials](tutorials/index.md)
 - [Further background](further-background/index.md)
+    - [Dependency pinning and testing](further-background/dependency-pinning-and-testing.md)
 - [Development](development.md)
 - [API reference](api/openscm_calibration/)
 - [Changelog](changelog.md)

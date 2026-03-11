@@ -12,13 +12,6 @@ Calibration tools for simple climate models (with potential for applications els
 [![PyPI](https://img.shields.io/pypi/v/openscm-calibration.svg)](https://pypi.org/project/openscm-calibration/)
 [![PyPI install](https://github.com/openscm/OpenSCM-Calibration/actions/workflows/install-pypi.yaml/badge.svg?branch=main)](https://github.com/openscm/OpenSCM-Calibration/actions/workflows/install-pypi.yaml)
 
-<!--- If you release on conda, you can use this
-**Conda :**
-[![Conda](https://img.shields.io/conda/vn/conda-forge/openscm-calibration.svg)](https://anaconda.org/conda-forge/openscm-calibration)
-[![Conda platforms](https://img.shields.io/conda/pn/conda-forge/openscm-calibration.svg)](https://anaconda.org/conda-forge/openscm-calibration)
-[![Conda install](https://github.com/openscm/OpenSCM-Calibration/actions/workflows/install-conda.yaml/badge.svg?branch=main)](https://github.com/openscm/OpenSCM-Calibration/actions/workflows/install-conda.yaml)
--->
-
 **Tests :**
 [![CI](https://github.com/openscm/OpenSCM-Calibration/actions/workflows/ci.yaml/badge.svg?branch=main)](https://github.com/openscm/OpenSCM-Calibration/actions/workflows/ci.yaml)
 [![Coverage](https://codecov.io/gh/openscm/OpenSCM-Calibration/branch/main/graph/badge.svg)](https://codecov.io/gh/openscm/OpenSCM-Calibration)
@@ -67,21 +60,9 @@ because of breaking updates to dependencies.
 
 The locked version of OpenSCM Calibration can be installed with
 
-<!--- If you release on conda, you can use this
-=== "mamba"
-    ```sh
-    mamba install -c conda-forge openscm-calibration-locked
-    ```
-
-=== "conda"
-    ```sh
-    conda install -c conda-forge openscm-calibration-locked
-    ```
-
--->
 === "pip"
     ```sh
-    pip install openscm-calibration[locked]
+    pip install 'openscm-calibration[locked]'
     ```
 
 ### As a library
@@ -103,18 +84,6 @@ please [raise an issue](https://github.com/openscm/OpenSCM-Calibration/issues).
 
 The (non-locked) version of OpenSCM Calibration can be installed with
 
-<!--- If you release on conda, you can use this
-=== "mamba"
-    ```sh
-    mamba install -c conda-forge openscm-calibration
-    ```
-
-=== "conda"
-    ```sh
-    conda install -c conda-forge openscm-calibration
-    ```
-
--->
 === "pip"
     ```sh
     pip install openscm-calibration
@@ -122,36 +91,28 @@ The (non-locked) version of OpenSCM Calibration can be installed with
 
 Additional dependencies can be installed using
 
-<!--- If you release on conda, you can use this
-=== "mamba"
-    If you are installing with mamba, we recommend
-    installing the extras by hand because there is no stable
-    solution yet (see [conda issue #7502](https://github.com/conda/conda/issues/7502))
-
-=== "conda"
-    If you are installing with conda, we recommend
-    installing the extras by hand because there is no stable
-    solution yet (see [conda issue #7502](https://github.com/conda/conda/issues/7502))
-
--->
 === "pip"
     ```sh
     # To add plotting dependencies
     pip install openscm-calibration[plots]
+
     # To add scmdata dependencies
     pip install openscm-calibration[scmdata]
+
+    # To add all optional dependencies
+    pip install 'openscm-calibration[full]'
     ```
 
 ### For developers
 
-For development, we rely on [pdm](https://pdm-project.org/en/latest/)
+For development, we rely on [uv](https://docs.astral.sh/uv/)
 for all our dependency management.
-To get started, you will need to make sure that pdm is installed
-([instructions here](https://pdm-project.org/en/latest/#installation),
-although we found that installing with [pipx](https://pipx.pypa.io/stable/installation/)
-worked perfectly for us).
+To get started, you will need to make sure that uv is installed
+([instructions here](https://docs.astral.sh/uv/getting-started/installation/)
+(we found that the self-managed install was best,
+particularly for upgrading uv later).
 
-For all of work, we use our `Makefile`.
+For all of our work, we use our `Makefile`.
 You can read the instructions out and run the commands by hand if you wish,
 but we generally discourage this because it can be error prone.
 In order to create your environment, run `make virtual-environment`.
@@ -167,6 +128,6 @@ For the rest of our developer docs, please see [development][development].
 ## Original template
 
 This project was generated from this template:
-[copier core python repository](https://gitlab.com/znicholls/copier-core-python-repository).
+[copier core python repository](https://gitlab.com/openscm/copier-core-python-repository).
 [copier](https://copier.readthedocs.io/en/stable/) is used to manage and
 distribute this template.

@@ -422,6 +422,8 @@ authorized_licenses = [
     "python software foundation license",
     "The Unlicense (Unlicense)",
     "zpl 2.1",
+    # Some numpy oddity
+    "BSD-3-Clause AND 0BSD AND MIT AND Zlib AND CC0-1.0",
 ]
 unauthorized_licenses = [
     "agpl",

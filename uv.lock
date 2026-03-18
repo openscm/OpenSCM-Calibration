@@ -2911,7 +2911,7 @@ wheels = [
 
 [[package]]
 name = "openscm-calibration"
-version = "0.6.3"
+version = "0.6.3.post1"
 source = { editable = "." }
 dependencies = [
     { name = "attrs" },
